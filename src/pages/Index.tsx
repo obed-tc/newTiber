@@ -1,10 +1,38 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { LoginPage } from "./LoginPage";
+import { DashboardPage } from "./DashboardPage";
+import { SuperAdminPage } from "./SuperAdminPage";
 
 const Index = () => {
-  return (
-    <div className="min-h-screen bg-background">
-    </div>
-  );
+  const [user, setUser] = useState<any>(null);
+
+  const handleLogin = (userData: any) => {
+    setUser(userData);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  if (user) {
+    if (user.role === "superadmin") {
+      return (
+        <SuperAdminPage 
+          user={user} 
+          onLogout={handleLogout}
+        />
+      );
+    }
+    
+    return (
+      <DashboardPage 
+        user={user} 
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  return <LoginPage onLogin={handleLogin} />;
 };
 
 export default Index;
