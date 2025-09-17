@@ -34,18 +34,18 @@ export const LoginForm = ({ onLogin, onForgotPassword }: LoginFormProps) => {
         className="hidden lg:flex lg:flex-1 relative bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${officeBackground})` }}
       >
-        <div className="absolute inset-0 bg-primary/20"></div>
+        <div className="absolute inset-0 bg-primary/25"></div>
       </div>
 
       {/* Right side - Login form */}
       <div className="flex-1 lg:flex-1 bg-gradient-background flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-2xl mb-4 shadow-elevated">
-              <img src={tiverLogo} alt="TIVER Logo" className="w-8 h-8" />
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-primary rounded-2xl mb-4 shadow-elevated">
+              <img src={tiverLogo} alt="TIVER Logo" className="w-auto h-auto max-w-16 max-h-16 object-contain" />
             </div>
             <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              PagaréSecure
+              TiverDocs
             </h1>
             <p className="text-muted-foreground mt-2">
               Repositorio Seguro de Títulos Valor

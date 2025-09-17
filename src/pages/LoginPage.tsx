@@ -19,7 +19,7 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
         name: "Super Administrador",
         email: "superadmin@pagaresecure.com",
         role: "superadmin" as const,
-        workspace: "PagareSecure Platform",
+        workspace: "TiverDocs Platform",
         clientId: "superadmin"
       },
       "admin@empresaa.com": {

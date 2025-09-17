@@ -64,7 +64,7 @@ export const RegisterForm = () => {
             Solicitar Acceso
           </h1>
           <p className="text-muted-foreground">
-            Completa el formulario para solicitar acceso a PagaréSecure
+            Completa el formulario para solicitar acceso a TiverDocs
           </p>
         </div>
 
