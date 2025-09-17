@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Lock, Mail } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
+import officeBackground from "@/assets/office-background.jpg";
+import tiverLogo from "@/assets/tiver-logo.png";
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => void;
@@ -26,83 +28,94 @@ export const LoginForm = ({ onLogin, onForgotPassword }: LoginFormProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-2xl mb-4 shadow-elevated">
-            <Shield className="w-8 h-8 text-primary-foreground" />
+    <div className="min-h-screen flex">
+      {/* Left side - Background image with overlay (desktop only) */}
+      <div 
+        className="hidden lg:flex lg:flex-1 relative bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${officeBackground})` }}
+      >
+        <div className="absolute inset-0 bg-primary/20"></div>
+      </div>
+
+      {/* Right side - Login form */}
+      <div className="flex-1 lg:flex-1 bg-gradient-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-2xl mb-4 shadow-elevated">
+              <img src={tiverLogo} alt="TIVER Logo" className="w-8 h-8" />
+            </div>
+            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              PagaréSecure
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Repositorio Seguro de Títulos Valor
+            </p>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            PagaréSecure
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Repositorio Seguro de Títulos Valor
-          </p>
-        </div>
 
-        <Card className="shadow-elevated border-0 bg-gradient-card">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
-            <CardDescription>
-              Accede a tu repositorio de documentos firmados electrónicamente
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  Correo electrónico
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="tu@empresa.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="bg-background/50"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="flex items-center gap-2">
-                  <Lock className="w-4 h-4" />
-                  Contraseña
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="bg-background/50"
-                />
-              </div>
-              <Button
-                type="submit"
-                className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
-                disabled={isLoading}
-              >
-                {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
-              </Button>
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={onForgotPassword}
-                  className="text-primary hover:text-primary/80 text-sm transition-colors"
+          <Card className="shadow-elevated border-0 bg-gradient-card">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
+              <CardDescription>
+                Accede a tu repositorio de documentos firmados electrónicamente
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    Correo electrónico
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="tu@empresa.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="bg-background/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="flex items-center gap-2">
+                    <Lock className="w-4 h-4" />
+                    Contraseña
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="bg-background/50"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
+                  disabled={isLoading}
                 >
-                  ¿Olvidaste tu contraseña?
-                </button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+                  {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+                </Button>
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={onForgotPassword}
+                    className="text-primary hover:text-primary/80 text-sm transition-colors"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
 
-        <div className="text-center mt-6 text-sm text-muted-foreground">
-          ¿Eres una nueva empresa?{" "}
-          <a href="/registro" className="text-primary hover:text-primary/80 transition-colors">
-            Solicita acceso
-          </a>
+          <div className="text-center mt-6 text-sm text-muted-foreground">
+            ¿Eres una nueva empresa?{" "}
+            <a href="/registro" className="text-primary hover:text-primary/80 transition-colors">
+              Solicita acceso
+            </a>
+          </div>
         </div>
       </div>
     </div>
