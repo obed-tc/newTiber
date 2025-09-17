@@ -8,8 +8,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Shield, LogOut, Settings, User } from "lucide-react";
+import { Shield, LogOut, Settings, User, Building2 } from "lucide-react";
 
 interface DashboardHeaderProps {
   user: {
@@ -19,9 +20,19 @@ interface DashboardHeaderProps {
     workspace: string;
   };
   onLogout: () => void;
+  onWorkspaceChange?: (workspace: string) => void;
 }
 
-export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
+export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: DashboardHeaderProps) => {
+  // Workspaces disponibles (esto vendría de una API en implementación real)
+  const availableWorkspaces = [
+    "TiverDocs Platform",
+    "Empresa A - Documentos",
+    "Empresa B - Títulos Valor",
+    "Cooperativa Rural",
+    "Banco Central"
+  ];
+
   const getRoleColor = (role: string) => {
     return role === "admin" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground";
   };
@@ -46,6 +57,23 @@ export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Selector de Workspace */}
+          <div className="hidden lg:flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-muted-foreground" />
+            <Select value={user.workspace} onValueChange={onWorkspaceChange}>
+              <SelectTrigger className="w-[200px] bg-background/50 border-border/50">
+                <SelectValue placeholder="Seleccionar workspace" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableWorkspaces.map((workspace) => (
+                  <SelectItem key={workspace} value={workspace}>
+                    {workspace}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="hidden md:flex items-center gap-3">
             <Badge variant="secondary" className={getRoleColor(user.role)}>
               {getRoleLabel(user.role)}

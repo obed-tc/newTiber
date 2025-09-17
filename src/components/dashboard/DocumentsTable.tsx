@@ -22,7 +22,8 @@ import {
   Clock,
   FileText,
   Settings,
-  FilterX
+  FilterX,
+  Upload
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -232,8 +233,8 @@ const mockDocuments: Document[] = [
 export const DocumentsTable = () => {
   const [documents] = useState(mockDocuments);
   const [searchTerm, setSearchTerm] = useState("");
+  const [documentTypeFilter, setDocumentTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [processFilter, setProcessFilter] = useState("all");
   const [advancedFilters, setAdvancedFilters] = useState<FilterValue[]>([]);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
@@ -326,19 +327,34 @@ export const DocumentsTable = () => {
       doc.idDeudor.includes(searchTerm) ||
       doc.id.toLowerCase().includes(searchTerm.toLowerCase());
     
+    const matchesDocumentType = documentTypeFilter === "all" || doc.tipoDocumento === documentTypeFilter;
+    
     const status = getDocumentStatus(doc.fechaVencimiento);
     const matchesStatus = statusFilter === "all" || status === statusFilter;
     
-    const matchesProcess = processFilter === "all" || doc.proceso === processFilter;
-    
     const matchesAdvancedFilters = applyAdvancedFilters(doc);
     
-    return matchesSearch && matchesStatus && matchesProcess && matchesAdvancedFilters;
+    return matchesSearch && matchesDocumentType && matchesStatus && matchesAdvancedFilters;
   });
 
   const handleDownload = (documentId: string) => {
     // Simular descarga
     console.log("Descargando documento:", documentId);
+  };
+
+  const handleUpload = () => {
+    // Simular carga de documento
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.docx,.jpg,.jpeg,.png';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        console.log("Cargando documento:", file.name);
+        // Aquí se implementaría la lógica real de carga
+      }
+    };
+    input.click();
   };
 
   return (
@@ -363,29 +379,31 @@ export const DocumentsTable = () => {
               />
             </div>
             
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={documentTypeFilter} onValueChange={setDocumentTypeFilter}>
               <SelectTrigger className="bg-background/50">
-                <SelectValue placeholder="Estado" />
+                <SelectValue placeholder="Tipo de documento" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value="vigente">Vigentes</SelectItem>
-                <SelectItem value="por-vencer">Por vencer</SelectItem>
-                <SelectItem value="vencido">Vencidos</SelectItem>
+                <SelectItem value="all">Todos los tipos</SelectItem>
+                <SelectItem value="Pagaré">Pagaré</SelectItem>
+                <SelectItem value="Solicitud de Crédito">Solicitud de crédito</SelectItem>
+                <SelectItem value="Consentimiento Informado">Consentimiento informado</SelectItem>
               </SelectContent>
             </Select>
             
-            <Select value={processFilter} onValueChange={setProcessFilter}>
-              <SelectTrigger className="bg-background/50">
-                <SelectValue placeholder="Proceso" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los procesos</SelectItem>
-                <SelectItem value="Crédito Personal">Crédito Personal</SelectItem>
-                <SelectItem value="Crédito Empresarial">Crédito Empresarial</SelectItem>
-                <SelectItem value="Microcrédito">Microcrédito</SelectItem>
-              </SelectContent>
-            </Select>
+            {documentTypeFilter === "Pagaré" && (
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="bg-background/50">
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="vigente">Vigentes</SelectItem>
+                  <SelectItem value="por-vencer">Por vencer</SelectItem>
+                  <SelectItem value="vencido">Vencidos</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
             
             <Button 
               variant="outline" 
@@ -434,9 +452,9 @@ export const DocumentsTable = () => {
             <CardTitle>
               Documentos ({filteredDocuments.length})
             </CardTitle>
-            <Button className="bg-gradient-primary">
-              <Download className="w-4 h-4 mr-2" />
-              Exportar selección
+            <Button onClick={handleUpload} className="bg-gradient-primary">
+              <Upload className="w-4 h-4 mr-2" />
+              Cargar documento
             </Button>
           </div>
         </CardHeader>

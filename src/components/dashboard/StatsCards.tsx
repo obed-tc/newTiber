@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   FileText, 
-  TrendingUp, 
   AlertTriangle, 
   CheckCircle,
   DollarSign,
@@ -16,7 +15,6 @@ interface StatsCardsProps {
     expiredDocuments: number;
     expiringDocuments: number;
     totalValue: number;
-    monthlyGrowth: number;
   };
 }
 
@@ -70,19 +68,11 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
       icon: AlertTriangle,
       color: "text-destructive",
       bgColor: "bg-destructive/10"
-    },
-    {
-      title: "Crecimiento",
-      value: `+${stats.monthlyGrowth}%`,
-      description: "Crecimiento mensual",
-      icon: TrendingUp,
-      color: "text-primary",
-      bgColor: "bg-primary/10"
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
       {cards.map((card, index) => {
         const Icon = card.icon;
         return (

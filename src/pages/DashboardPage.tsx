@@ -20,8 +20,7 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
     activeDocuments: 1139,
     expiredDocuments: 23,
     expiringDocuments: 85,
-    totalValue: 15750000000, // 15.75 mil millones COP
-    monthlyGrowth: 12.5
+    totalValue: 15750000000 // 15.75 mil millones COP
   };
 
   return (
