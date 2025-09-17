@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarDays, DollarSign, FileText, User, Building, Settings, X } from "lucide-react";
 import { FilterConfig, FilterValue } from "./types";
+import { getFilterCategoriesByDocumentType } from "./dynamicFilterConfigs";
 
 interface AdvancedFiltersModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface AdvancedFiltersModalProps {
   onApplyFilters: (filters: FilterValue[]) => void;
   availableFilters: FilterConfig[];
   currentFilters: FilterValue[];
+  selectedDocumentType?: string;
 }
 
 export const AdvancedFiltersModal = ({
@@ -25,18 +27,12 @@ export const AdvancedFiltersModal = ({
   onClose,
   onApplyFilters,
   availableFilters,
-  currentFilters
+  currentFilters,
+  selectedDocumentType
 }: AdvancedFiltersModalProps) => {
   const [selectedFilters, setSelectedFilters] = useState<FilterValue[]>(currentFilters);
 
-  const filterCategories = {
-    general: availableFilters.filter(f => ["id", "nombreDeudor", "nombreCodeudor", "idDeudor", "idCodeudor", "tipoDocumento"].includes(f.field)),
-    financiero: availableFilters.filter(f => ["valorTitulo", "tasaInteres", "plazoCredito", "ingresosMensuales", "patrimonio", "valorGarantia", "valorMora"].includes(f.field)),
-    fechas: availableFilters.filter(f => ["fechaVencimiento", "fechaIngreso", "fechaFirmaTitle", "fechaCaducidad", "fechaConstruccion", "fechaUltimaGestion", "fechaProximaAccion"].includes(f.field)),
-    personal: availableFilters.filter(f => ["tipoPersona", "genero", "estadoCivil", "nivelEducativo", "ocupacion", "actividadEconomica"].includes(f.field)),
-    cobranza: availableFilters.filter(f => ["estado", "etapaCobranza", "diasMora", "gestorAsignado", "resultadoUltimaGestion", "proximaAccion"].includes(f.field)),
-    ubicacion: availableFilters.filter(f => ["ciudad", "departamento", "ciudadExpedicion", "direccion"].includes(f.field))
-  };
+  const filterCategories = getFilterCategoriesByDocumentType(selectedDocumentType || "", availableFilters);
 
   const addFilter = (filterConfig: FilterConfig) => {
     const existingFilter = selectedFilters.find(f => f.field === filterConfig.field);
@@ -183,16 +179,18 @@ export const AdvancedFiltersModal = ({
               <Label className="text-sm font-medium">Campos disponibles para filtrar</Label>
             </div>
             
-            <Tabs defaultValue="general" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="general">General</TabsTrigger>
-                <TabsTrigger value="financiero">Financiero</TabsTrigger>
-                <TabsTrigger value="fechas">Fechas</TabsTrigger>
+            <Tabs defaultValue="fijos" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="fijos">Campos Fijos</TabsTrigger>
+                <TabsTrigger value="variables">Campos Variables</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="general" className="mt-4">
+              <TabsContent value="fijos" className="mt-4">
+                <div className="mb-2">
+                  <p className="text-xs text-muted-foreground">Campos disponibles en todos los tipos de documento</p>
+                </div>
                 <div className="grid grid-cols-2 gap-2">
-                  {[...filterCategories.general, ...filterCategories.personal, ...filterCategories.ubicacion].map((filter) => (
+                  {filterCategories.fijos.map((filter) => (
                     <Button
                       key={filter.field}
                       variant="outline"
@@ -201,46 +199,43 @@ export const AdvancedFiltersModal = ({
                       disabled={selectedFilters.some(f => f.field === filter.field)}
                       className="justify-start h-auto p-2 text-xs"
                     >
-                      <User className="w-3 h-3 mr-1" />
+                      <Building className="w-3 h-3 mr-1" />
                       {filter.label}
                     </Button>
                   ))}
                 </div>
               </TabsContent>
               
-              <TabsContent value="financiero" className="mt-4">
-                <div className="grid grid-cols-2 gap-2">
-                  {filterCategories.financiero.map((filter) => (
-                    <Button
-                      key={filter.field}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addFilter(filter)}
-                      disabled={selectedFilters.some(f => f.field === filter.field)}
-                      className="justify-start h-auto p-2 text-xs"
-                    >
-                      <DollarSign className="w-3 h-3 mr-1" />
-                      {filter.label}
-                    </Button>
-                  ))}
+              <TabsContent value="variables" className="mt-4">
+                <div className="mb-2">
+                  <p className="text-xs text-muted-foreground">
+                    {selectedDocumentType 
+                      ? `Campos específicos para ${selectedDocumentType}` 
+                      : "Selecciona un tipo de documento en los filtros principales"}
+                  </p>
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="fechas" className="mt-4">
                 <div className="grid grid-cols-2 gap-2">
-                  {[...filterCategories.fechas, ...filterCategories.cobranza].map((filter) => (
-                    <Button
-                      key={filter.field}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addFilter(filter)}
-                      disabled={selectedFilters.some(f => f.field === filter.field)}
-                      className="justify-start h-auto p-2 text-xs"
-                    >
-                      <CalendarDays className="w-3 h-3 mr-1" />
-                      {filter.label}
-                    </Button>
-                  ))}
+                  {filterCategories.variables.length > 0 ? (
+                    filterCategories.variables.map((filter) => (
+                      <Button
+                        key={filter.field}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addFilter(filter)}
+                        disabled={selectedFilters.some(f => f.field === filter.field)}
+                        className="justify-start h-auto p-2 text-xs"
+                      >
+                        <FileText className="w-3 h-3 mr-1" />
+                        {filter.label}
+                      </Button>
+                    ))
+                  ) : (
+                    <div className="col-span-2 text-center text-muted-foreground text-xs py-4">
+                      {selectedDocumentType 
+                        ? "No hay campos específicos disponibles"
+                        : "Selecciona un tipo de documento para ver campos específicos"}
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>

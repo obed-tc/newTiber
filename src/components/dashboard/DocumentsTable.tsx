@@ -30,6 +30,7 @@ import { es } from "date-fns/locale";
 import { AdvancedFiltersModal } from "./filters/AdvancedFiltersModal";
 import { ActiveFilters } from "./filters/ActiveFilters";
 import { documentFilterConfigs } from "./filters/filterConfigs";
+import { getFilterConfigsByDocumentType } from "./filters/dynamicFilterConfigs";
 import { FilterValue } from "./filters/types";
 
 interface Document {
@@ -237,6 +238,19 @@ export const DocumentsTable = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [advancedFilters, setAdvancedFilters] = useState<FilterValue[]>([]);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  
+  // Mapear el tipo de documento seleccionado para usar en filtros dinámicos
+  const getSelectedDocumentTypeForFilters = () => {
+    switch (documentTypeFilter) {
+      case "pagare": return "Pagaré";
+      case "solicitud": return "Solicitud de crédito";
+      case "consentimiento": return "Consentimiento informado";
+      default: return "";
+    }
+  };
+
+  const selectedDocumentTypeForFilters = getSelectedDocumentTypeForFilters();
+  const dynamicFilterConfigs = getFilterConfigsByDocumentType(selectedDocumentTypeForFilters);
 
   const getDocumentStatus = (fechaVencimiento: Date) => {
     const today = new Date();
@@ -441,8 +455,9 @@ export const DocumentsTable = () => {
         isOpen={showAdvancedFilters}
         onClose={() => setShowAdvancedFilters(false)}
         onApplyFilters={setAdvancedFilters}
-        availableFilters={documentFilterConfigs}
+        availableFilters={dynamicFilterConfigs}
         currentFilters={advancedFilters}
+        selectedDocumentType={selectedDocumentTypeForFilters}
       />
 
       {/* Tabla de documentos */}

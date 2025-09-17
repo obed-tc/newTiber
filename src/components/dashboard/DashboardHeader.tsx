@@ -58,20 +58,32 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
 
         <div className="flex items-center gap-4">
           {/* Selector de Workspace */}
-          <div className="hidden lg:flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-muted-foreground" />
-            <Select value={user.workspace} onValueChange={onWorkspaceChange}>
-              <SelectTrigger className="w-[200px] bg-background/50 border-border/50">
-                <SelectValue placeholder="Seleccionar workspace" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableWorkspaces.map((workspace) => (
-                  <SelectItem key={workspace} value={workspace}>
-                    {workspace}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="hidden lg:flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10">
+              <Building2 className="w-4 h-4 text-primary" />
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground font-medium">Workspace Activo</span>
+                <Select value={user.workspace} onValueChange={onWorkspaceChange}>
+                  <SelectTrigger className="w-[200px] bg-background border-0 h-auto p-0 text-sm font-medium text-foreground focus:ring-0 shadow-none">
+                    <SelectValue placeholder="Seleccionar workspace" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border border-border shadow-lg">
+                    {availableWorkspaces.map((workspace) => (
+                      <SelectItem 
+                        key={workspace} 
+                        value={workspace}
+                        className="cursor-pointer focus:bg-primary/10 focus:text-primary"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-3 h-3" />
+                          {workspace}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
 
           <div className="hidden md:flex items-center gap-3">
