@@ -4,7 +4,7 @@ import { SuperAdminSidebar } from "@/components/superadmin/SuperAdminSidebar";
 import { SuperAdminDashboard } from "@/components/superadmin/SuperAdminDashboard";
 import { WorkspacesManager } from "@/components/superadmin/WorkspacesManager";
 import { UsersManager } from "@/components/superadmin/UsersManager";
-import { SystemStats } from "@/components/superadmin/SystemStats";
+import { StorageStats } from "@/components/superadmin/StorageStats";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 interface SuperAdminPageProps {
@@ -32,7 +32,7 @@ export const SuperAdminPage = ({ user, onLogout }: SuperAdminPageProps) => {
       case "users":
         return <UsersManager />;
       case "stats":
-        return <SystemStats />;
+        return <StorageStats />;
       default:
         return <SuperAdminDashboard />;
     }

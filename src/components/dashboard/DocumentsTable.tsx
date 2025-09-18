@@ -231,7 +231,11 @@ const mockDocuments: Document[] = [
   }
 ];
 
-export const DocumentsTable = () => {
+interface DocumentsTableProps {
+  userRole?: "admin" | "viewer";
+}
+
+export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
   const [documents] = useState(mockDocuments);
   const [searchTerm, setSearchTerm] = useState("");
   const [documentTypeFilter, setDocumentTypeFilter] = useState("all");
@@ -293,8 +297,9 @@ export const DocumentsTable = () => {
     return new Intl.NumberFormat("es-CO", {
       style: "currency",
       currency: "COP",
-      minimumFractionDigits: 0
-    }).format(amount);
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount).replace(/\./g, ',').replace(/,([^,]*)$/, '.$1').replace(/,/g, '.');
   };
 
   const applyAdvancedFilters = (document: Document) => {
@@ -481,7 +486,7 @@ export const DocumentsTable = () => {
                   <TableHead>ID Documento</TableHead>
                   <TableHead>Deudor</TableHead>
                   <TableHead>Codeudor</TableHead>
-                  <TableHead>Valor</TableHead>
+                  <TableHead>Valor (COP)</TableHead>
                   <TableHead>Vencimiento</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Proceso</TableHead>
@@ -525,14 +530,18 @@ export const DocumentsTable = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDownload(doc.id)}
-                          className="bg-background/50 hover:bg-primary hover:text-primary-foreground"
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
+                        {userRole === "admin" ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDownload(doc.id)}
+                            className="bg-background/50 hover:bg-primary hover:text-primary-foreground"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Solo visualización</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   );

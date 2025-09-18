@@ -60,14 +60,14 @@ export const SuperAdminSidebar = ({ currentView, onViewChange }: SuperAdminSideb
           </SidebarGroupLabel>
           
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-2">
               {menuItems.map((item) => (
-                <SidebarMenuItem key={item.id}>
+                <SidebarMenuItem key={item.id} className="mb-2">
                   <SidebarMenuButton 
                     onClick={() => onViewChange(item.id as any)}
                     className={cn(
-                      "w-full justify-start",
-                      currentView === item.id && "bg-accent text-accent-foreground font-medium"
+                      "w-full justify-start transition-all duration-200 hover:bg-accent/50",
+                      currentView === item.id && "bg-accent text-accent-foreground font-medium py-3 px-4 shadow-sm"
                     )}
                   >
                     <item.icon className="h-4 w-4" />

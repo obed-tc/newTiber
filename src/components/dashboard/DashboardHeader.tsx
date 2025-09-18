@@ -59,24 +59,31 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
         <div className="flex items-center gap-4">
           {/* Selector de Workspace */}
           <div className="hidden lg:flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10">
-              <Building2 className="w-4 h-4 text-primary" />
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground font-medium">Workspace Activo</span>
+            <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 shadow-sm">
+              <Building2 className="w-5 h-5 text-primary" />
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs text-primary/80 font-medium">Workspace Activo</span>
                 <Select value={user.workspace} onValueChange={onWorkspaceChange}>
-                  <SelectTrigger className="w-[200px] bg-background border-0 h-auto p-0 text-sm font-medium text-foreground focus:ring-0 shadow-none">
+                  <SelectTrigger className="w-[220px] bg-transparent border-0 h-auto p-0 text-sm font-semibold text-foreground focus:ring-0 shadow-none hover:text-primary transition-colors">
                     <SelectValue placeholder="Seleccionar workspace" />
                   </SelectTrigger>
-                  <SelectContent className="bg-background border border-border shadow-lg">
+                  <SelectContent className="bg-background border border-border shadow-xl min-w-[280px] z-50">
+                    <div className="p-2 border-b border-border/50">
+                      <span className="text-xs font-medium text-muted-foreground">Workspaces Disponibles</span>
+                    </div>
                     {availableWorkspaces.map((workspace) => (
                       <SelectItem 
                         key={workspace} 
                         value={workspace}
-                        className="cursor-pointer focus:bg-primary/10 focus:text-primary"
+                        className="cursor-pointer focus:bg-primary/10 focus:text-primary py-3 px-3 rounded-md m-1"
                       >
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-3 h-3" />
-                          {workspace}
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full ${workspace === user.workspace ? 'bg-primary' : 'bg-muted-foreground/30'}`}></div>
+                          <Building2 className="w-4 h-4" />
+                          <span className="font-medium">{workspace}</span>
+                          {workspace === user.workspace && (
+                            <Badge variant="secondary" className="ml-auto text-xs">Activo</Badge>
+                          )}
                         </div>
                       </SelectItem>
                     ))}

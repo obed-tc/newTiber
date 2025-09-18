@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,19 @@ export const AdvancedFiltersModal = ({
 }: AdvancedFiltersModalProps) => {
   const [selectedFilters, setSelectedFilters] = useState<FilterValue[]>(currentFilters);
 
+  // Update available filters when document type changes
   const filterCategories = getFilterCategoriesByDocumentType(selectedDocumentType || "", availableFilters);
+
+  // Reset selected filters when document type changes
+  React.useEffect(() => {
+    // Only keep filters that are still available in the new document type
+    const validFilters = selectedFilters.filter(filter => 
+      availableFilters.some(af => af.field === filter.field)
+    );
+    if (validFilters.length !== selectedFilters.length) {
+      setSelectedFilters(validFilters);
+    }
+  }, [selectedDocumentType, availableFilters]);
 
   const addFilter = (filterConfig: FilterConfig) => {
     const existingFilter = selectedFilters.find(f => f.field === filterConfig.field);

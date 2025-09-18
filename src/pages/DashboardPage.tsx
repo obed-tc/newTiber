@@ -32,7 +32,7 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
         <StatsCards stats={mockStats} />
         
         {/* Tabla de documentos */}
-        <DocumentsTable />
+        <DocumentsTable userRole={user.role} />
       </main>
     </div>
   );
