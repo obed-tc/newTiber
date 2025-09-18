@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, FileText, X, Plus } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Upload, FileText, X, Plus, Building, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomAttributes, DocumentAttributeValue } from "@/hooks/useCustomAttributes";
+import { getFilterConfigsByDocumentType } from "./filters/dynamicFilterConfigs";
 
 interface DocumentUploadModalProps {
   isOpen: boolean;
@@ -21,7 +23,8 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload }: DocumentUploa
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState<string>("");
-  const [attributeValues, setAttributeValues] = useState<Record<string, string | number>>({});
+  const [basicAttributeValues, setBasicAttributeValues] = useState<Record<string, string | number>>({});
+  const [customAttributeValues, setCustomAttributeValues] = useState<Record<string, string | number>>({});
   
   const documentTypes = ["Pagaré", "Solicitud de crédito", "Consentimiento informado"];
   
@@ -34,11 +37,19 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload }: DocumentUploa
   
   const handleDocumentTypeChange = (type: string) => {
     setDocumentType(type);
-    setAttributeValues({}); // Reset attribute values when document type changes
+    setBasicAttributeValues({}); // Reset basic attribute values when document type changes
+    setCustomAttributeValues({}); // Reset custom attribute values when document type changes
   };
   
-  const handleAttributeChange = (attributeId: string, value: string | number) => {
-    setAttributeValues(prev => ({
+  const handleBasicAttributeChange = (fieldName: string, value: string | number) => {
+    setBasicAttributeValues(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
+  };
+  
+  const handleCustomAttributeChange = (attributeId: string, value: string | number) => {
+    setCustomAttributeValues(prev => ({
       ...prev,
       [attributeId]: value
     }));
@@ -63,18 +74,27 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload }: DocumentUploa
       return;
     }
     
-    // Convert attribute values to the expected format
-    const documentAttributes: DocumentAttributeValue[] = Object.entries(attributeValues).map(([attributeId, value]) => ({
-      attributeId,
-      value
-    }));
+    // Combine all attribute values into a single array
+    const allAttributes: DocumentAttributeValue[] = [
+      // Basic document attributes
+      ...Object.entries(basicAttributeValues).map(([field, value]) => ({
+        attributeId: `basic_${field}`,
+        value
+      })),
+      // Custom attributes
+      ...Object.entries(customAttributeValues).map(([attributeId, value]) => ({
+        attributeId,
+        value
+      }))
+    ];
     
-    onUpload(selectedFile, documentAttributes, documentType);
+    onUpload(selectedFile, allAttributes, documentType);
     
     // Reset form
     setSelectedFile(null);
     setDocumentType("");
-    setAttributeValues({});
+    setBasicAttributeValues({});
+    setCustomAttributeValues({});
     
     toast({
       title: "Documento subido",
@@ -84,7 +104,14 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload }: DocumentUploa
     onClose();
   };
   
+  // Get available filters for the selected document type
+  const availableBasicFields = documentType ? getFilterConfigsByDocumentType(documentType) : [];
   const customAttributes = documentType ? getAttributesForDocumentType(documentType) : [];
+  
+  // Separate basic fields (excluding common fields that are auto-generated)
+  const basicFields = availableBasicFields.filter(field => 
+    !['empresa', 'proceso', 'subproceso', 'fechaIngreso', 'id'].includes(field.field)
+  );
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -153,72 +180,154 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload }: DocumentUploa
             </Select>
           </div>
           
-          {/* Custom Attributes */}
-          {customAttributes.length > 0 && (
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  Atributos del Documento
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {customAttributes.map((attribute) => (
-                  <div key={attribute.id} className="space-y-2">
-                    <Label className="text-sm font-medium">
-                      {attribute.label}
-                      {attribute.required && <span className="text-destructive ml-1">*</span>}
-                    </Label>
-                    
-                    {attribute.type === "text" && (
-                      <Input
-                        placeholder={`Ingresa ${attribute.label.toLowerCase()}`}
-                        value={attributeValues[attribute.id] || ""}
-                        onChange={(e) => handleAttributeChange(attribute.id, e.target.value)}
-                      />
-                    )}
-                    
-                    {attribute.type === "number" && (
-                      <Input
-                        type="number"
-                        placeholder={`Ingresa ${attribute.label.toLowerCase()}`}
-                        value={attributeValues[attribute.id] || ""}
-                        onChange={(e) => handleAttributeChange(attribute.id, parseFloat(e.target.value) || 0)}
-                      />
-                    )}
-                    
-                    {attribute.type === "date" && (
-                      <Input
-                        type="date"
-                        value={attributeValues[attribute.id] || ""}
-                        onChange={(e) => handleAttributeChange(attribute.id, e.target.value)}
-                      />
-                    )}
-                    
-                    {attribute.type === "select" && attribute.options && (
-                      <Select 
-                        value={attributeValues[attribute.id]?.toString() || ""} 
-                        onValueChange={(value) => handleAttributeChange(attribute.id, value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={`Selecciona ${attribute.label.toLowerCase()}`} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {attribute.options.map(option => (
-                            <SelectItem key={option} value={option}>{option}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
+          {/* Document Attributes */}
+          {(basicFields.length > 0 || customAttributes.length > 0) && (
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="basic">Campos Básicos</TabsTrigger>
+                <TabsTrigger value="custom">Campos Personalizados</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="basic" className="mt-4">
+                {basicFields.length > 0 ? (
+                  <Card>
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Building className="w-4 h-4" />
+                        Información Básica del Documento
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {basicFields.map((field) => (
+                        <div key={field.field} className="space-y-2">
+                          <Label className="text-sm font-medium">
+                            {field.label}
+                          </Label>
+                          
+                          {field.type === "text" && (
+                            <Input
+                              placeholder={`Ingresa ${field.label.toLowerCase()}`}
+                              value={basicAttributeValues[field.field] || ""}
+                              onChange={(e) => handleBasicAttributeChange(field.field, e.target.value)}
+                            />
+                          )}
+                          
+                          {field.type === "number" && (
+                            <Input
+                              type="number"
+                              placeholder={`Ingresa ${field.label.toLowerCase()}`}
+                              value={basicAttributeValues[field.field] || ""}
+                              onChange={(e) => handleBasicAttributeChange(field.field, parseFloat(e.target.value) || 0)}
+                            />
+                          )}
+                          
+                          {field.type === "date" && (
+                            <Input
+                              type="date"
+                              value={basicAttributeValues[field.field] || ""}
+                              onChange={(e) => handleBasicAttributeChange(field.field, e.target.value)}
+                            />
+                          )}
+                          
+                          {field.type === "select" && field.options && (
+                            <Select 
+                              value={basicAttributeValues[field.field]?.toString() || ""} 
+                              onValueChange={(value) => handleBasicAttributeChange(field.field, value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder={`Selecciona ${field.label.toLowerCase()}`} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {field.options.map(option => (
+                                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="text-center text-muted-foreground text-sm py-8">
+                    No hay campos básicos específicos para este tipo de documento.
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="custom" className="mt-4">
+                {customAttributes.length > 0 ? (
+                  <Card>
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        Atributos Personalizados
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {customAttributes.map((attribute) => (
+                        <div key={attribute.id} className="space-y-2">
+                          <Label className="text-sm font-medium">
+                            {attribute.label}
+                            {attribute.required && <span className="text-destructive ml-1">*</span>}
+                          </Label>
+                          
+                          {attribute.type === "text" && (
+                            <Input
+                              placeholder={`Ingresa ${attribute.label.toLowerCase()}`}
+                              value={customAttributeValues[attribute.id] || ""}
+                              onChange={(e) => handleCustomAttributeChange(attribute.id, e.target.value)}
+                            />
+                          )}
+                          
+                          {attribute.type === "number" && (
+                            <Input
+                              type="number"
+                              placeholder={`Ingresa ${attribute.label.toLowerCase()}`}
+                              value={customAttributeValues[attribute.id] || ""}
+                              onChange={(e) => handleCustomAttributeChange(attribute.id, parseFloat(e.target.value) || 0)}
+                            />
+                          )}
+                          
+                          {attribute.type === "date" && (
+                            <Input
+                              type="date"
+                              value={customAttributeValues[attribute.id] || ""}
+                              onChange={(e) => handleCustomAttributeChange(attribute.id, e.target.value)}
+                            />
+                          )}
+                          
+                          {attribute.type === "select" && attribute.options && (
+                            <Select 
+                              value={customAttributeValues[attribute.id]?.toString() || ""} 
+                              onValueChange={(value) => handleCustomAttributeChange(attribute.id, value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder={`Selecciona ${attribute.label.toLowerCase()}`} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {attribute.options.map(option => (
+                                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="text-center text-muted-foreground text-sm py-8">
+                    No hay atributos personalizados configurados para este tipo de documento.
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           )}
           
-          {documentType && customAttributes.length === 0 && (
+          {documentType && basicFields.length === 0 && customAttributes.length === 0 && (
             <div className="text-center text-muted-foreground text-sm py-8">
-              No hay atributos personalizados configurados para este tipo de documento.
+              No hay atributos configurados para este tipo de documento.
             </div>
           )}
         </div>

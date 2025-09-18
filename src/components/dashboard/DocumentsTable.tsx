@@ -246,7 +246,7 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   
-  const { attributes, saveDocumentAttributes } = useCustomAttributes();
+  const { attributes, saveDocumentAttributes, getDocumentAttributes } = useCustomAttributes();
   
   // Mapear el tipo de documento seleccionado para usar en filtros dinámicos
   const getSelectedDocumentTypeForFilters = () => {
@@ -309,7 +309,21 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
 
   const applyAdvancedFilters = (document: Document) => {
     return advancedFilters.every(filter => {
-      const fieldValue = document[filter.field as keyof Document];
+      let fieldValue: any;
+      
+      // Handle custom attributes
+      if (filter.field.startsWith('custom_')) {
+        const customAttrName = filter.field.replace('custom_', '');
+        const docAttributes = getDocumentAttributes(document.id);
+        const customValue = docAttributes.find(attr => {
+          const customAttr = attributes.find(a => a.id === attr.attributeId);
+          return customAttr?.name === customAttrName;
+        });
+        fieldValue = customValue?.value;
+      } else {
+        // Handle standard document fields
+        fieldValue = document[filter.field as keyof Document];
+      }
       
       if (fieldValue === undefined || fieldValue === null) return false;
       
@@ -399,19 +413,68 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
     setShowUploadModal(true);
   };
 
-  const handleDocumentUpload = (file: File, attributes: any[], documentType: string) => {
+  const handleDocumentUpload = (file: File, documentAttributes: any[], documentType: string) => {
     // Generate a unique document ID
     const documentId = `DOC-${Date.now()}`;
     
     // Save the document attributes
-    saveDocumentAttributes(documentId, attributes);
+    saveDocumentAttributes(documentId, documentAttributes);
     
-    // Here you would implement the actual file upload logic
+    // Create a new mock document with basic info (in real app, this would come from backend)
+    const newDocument: Document = {
+      id: documentId,
+      nombreDeudor: "Documento Cargado",
+      nombreCodeudor: "",
+      idDeudor: "ID-" + Date.now(),
+      idCodeudor: "",
+      fechaVencimiento: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+      valorTitulo: 0,
+      fechaIngreso: new Date(),
+      proceso: "Nuevo",
+      subproceso: "Carga",
+      tipoDocumento: documentType,
+      nombreDelTitulo: file.name,
+      fechaFirmaTitle: new Date(),
+      fechaCaducidad: new Date(),
+      fechaConstruccion: new Date(),
+      tasaInteres: 0,
+      plazoCredito: 0,
+      ciudadExpedicion: "",
+      moneda: "COP",
+      lugarPago: "",
+      telefono: "",
+      email: "",
+      direccion: "",
+      ciudad: "",
+      departamento: "",
+      tipoPersona: "Natural",
+      ocupacion: "",
+      actividadEconomica: "",
+      ingresosMensuales: 0,
+      patrimonio: 0,
+      experienciaCrediticia: "",
+      scoring: 0,
+      garantia: "",
+      valorGarantia: 0,
+      observaciones: `Documento cargado: ${file.name}`,
+      estado: "Activo",
+      etapaCobranza: "",
+      diasMora: 0,
+      valorMora: 0,
+      gestorAsignado: "",
+      fechaUltimaGestion: new Date(),
+      resultadoUltimaGestion: "",
+      proximaAccion: "",
+      fechaProximaAccion: new Date()
+    };
+    
+    // Here you would implement the actual file upload logic and backend integration
     console.log("Uploading document:", {
       id: documentId,
       file: file.name,
       type: documentType,
-      attributes
+      attributes: documentAttributes,
+      document: newDocument
     });
     
     // Close modal after successful upload
