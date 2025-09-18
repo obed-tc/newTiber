@@ -64,8 +64,11 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
               <div className="flex flex-col min-w-0">
                 <span className="text-xs text-primary/80 font-medium">Workspace Activo</span>
                 <Select value={user.workspace} onValueChange={onWorkspaceChange}>
-                  <SelectTrigger className="w-[220px] bg-transparent border-0 h-auto p-0 text-sm font-semibold text-foreground focus:ring-0 shadow-none hover:text-primary transition-colors">
-                    <SelectValue placeholder="Seleccionar workspace" />
+                  <SelectTrigger className="w-[220px] bg-transparent border-0 h-auto p-0 text-sm font-semibold text-foreground focus:ring-0 shadow-none hover:text-primary transition-colors [&>span]:bg-transparent [&>span]:text-inherit">
+                    <SelectValue 
+                      placeholder="Seleccionar workspace"
+                      className="bg-transparent text-inherit"
+                    />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border shadow-xl min-w-[280px] z-50">
                     <div className="p-2 border-b border-border/50">
