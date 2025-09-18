@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
@@ -11,6 +12,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Shield, LogOut, Settings, User, Building2 } from "lucide-react";
+import { AttributeManager } from "@/components/admin/AttributeManager";
 
 interface DashboardHeaderProps {
   user: {
@@ -24,6 +26,8 @@ interface DashboardHeaderProps {
 }
 
 export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: DashboardHeaderProps) => {
+  const [isAttributeManagerOpen, setIsAttributeManagerOpen] = useState(false);
+  
   // Workspaces disponibles (esto vendría de una API en implementación real)
   const availableWorkspaces = [
     "TiverDocs Platform",
@@ -39,6 +43,10 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
 
   const getRoleLabel = (role: string) => {
     return role === "admin" ? "Administrador" : "Visualizador";
+  };
+
+  const handleSaveAttributes = (attributes: any[]) => {
+    console.log("Saved attributes:", attributes);
   };
 
   return (
@@ -122,14 +130,23 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer">
-                <User className="mr-2 h-4 w-4" />
-                <span>Perfil</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Configuración</span>
-              </DropdownMenuItem>
+               <DropdownMenuItem className="cursor-pointer">
+                 <User className="mr-2 h-4 w-4" />
+                 <span>Perfil</span>
+               </DropdownMenuItem>
+               {user.role === "admin" && (
+                 <DropdownMenuItem 
+                   className="cursor-pointer"
+                   onClick={() => setIsAttributeManagerOpen(true)}
+                 >
+                   <Settings className="mr-2 h-4 w-4" />
+                   <span>Gestionar Atributos</span>
+                 </DropdownMenuItem>
+               )}
+               <DropdownMenuItem className="cursor-pointer">
+                 <Settings className="mr-2 h-4 w-4" />
+                 <span>Configuración</span>
+               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="cursor-pointer text-destructive focus:text-destructive"
@@ -142,6 +159,12 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
           </DropdownMenu>
         </div>
       </div>
+
+      <AttributeManager 
+        isOpen={isAttributeManagerOpen}
+        onClose={() => setIsAttributeManagerOpen(false)}
+        onSave={handleSaveAttributes}
+      />
     </header>
   );
 };

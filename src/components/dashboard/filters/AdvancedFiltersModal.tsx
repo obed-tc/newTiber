@@ -77,25 +77,11 @@ export const AdvancedFiltersModal = ({
     switch (config.type) {
       case "text":
         return (
-          <div className="grid grid-cols-3 gap-2">
-            <Select value={filter.operator} onValueChange={(value) => updateFilter(index, { operator: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="contains">Contiene</SelectItem>
-                <SelectItem value="equals">Igual a</SelectItem>
-                <SelectItem value="startsWith">Comienza con</SelectItem>
-                <SelectItem value="endsWith">Termina con</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input
-              placeholder="Valor..."
-              value={filter.value}
-              onChange={(e) => updateFilter(index, { value: e.target.value })}
-              className="col-span-2"
-            />
-          </div>
+          <Input
+            placeholder="Ingresa el texto a buscar..."
+            value={filter.value}
+            onChange={(e) => updateFilter(index, { value: e.target.value, operator: "contains" })}
+          />
         );
 
       case "number":
@@ -123,25 +109,38 @@ export const AdvancedFiltersModal = ({
         );
 
       case "date":
+        // Parse existing range value or set defaults
+        const currentRange = typeof filter.value === 'string' && filter.value.includes('|') 
+          ? filter.value.split('|') 
+          : ['', ''];
+        const [fromDate, toDate] = currentRange;
+
         return (
-          <div className="grid grid-cols-3 gap-2">
-            <Select value={filter.operator} onValueChange={(value) => updateFilter(index, { operator: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="equals">En fecha</SelectItem>
-                <SelectItem value="before">Antes de</SelectItem>
-                <SelectItem value="after">Después de</SelectItem>
-                <SelectItem value="between">Entre fechas</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input
-              type="date"
-              value={filter.value.toString()}
-              onChange={(e) => updateFilter(index, { value: e.target.value })}
-              className="col-span-2"
-            />
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Label className="text-xs text-muted-foreground w-12">Desde:</Label>
+              <Input
+                type="date"
+                value={fromDate}
+                onChange={(e) => {
+                  const newValue = `${e.target.value}|${toDate}`;
+                  updateFilter(index, { value: newValue, operator: "between" });
+                }}
+                className="flex-1"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs text-muted-foreground w-12">Hasta:</Label>
+              <Input
+                type="date"
+                value={toDate}
+                onChange={(e) => {
+                  const newValue = `${fromDate}|${e.target.value}`;
+                  updateFilter(index, { value: newValue, operator: "between" });
+                }}
+                className="flex-1"
+              />
+            </div>
           </div>
         );
 

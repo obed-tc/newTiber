@@ -28,8 +28,8 @@ export const DashboardPage = ({ user, onLogout }: DashboardPageProps) => {
       <DashboardHeader user={user} onLogout={onLogout} />
       
       <main className="container mx-auto px-6 py-8 space-y-8">
-        {/* Tarjetas de estadísticas */}
-        <StatsCards stats={mockStats} />
+        {/* Tarjetas de estadísticas - Solo para administradores */}
+        {user.role === "admin" && <StatsCards stats={mockStats} />}
         
         {/* Tabla de documentos */}
         <DocumentsTable userRole={user.role} />

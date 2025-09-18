@@ -308,32 +308,49 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
       
       if (fieldValue === undefined || fieldValue === null) return false;
       
-      const value = filter.value.toString().toLowerCase();
-      const docValue = fieldValue.toString().toLowerCase();
-      
       switch (filter.operator) {
         case "contains":
-          return docValue.includes(value);
+          // Case-insensitive text search
+          return fieldValue.toString().toLowerCase().includes(filter.value.toString().toLowerCase());
+        
         case "equals":
-          return docValue === value;
-        case "startsWith":
-          return docValue.startsWith(value);
-        case "endsWith":
-          return docValue.endsWith(value);
+          if (typeof fieldValue === 'number' && typeof filter.value === 'number') {
+            return fieldValue === filter.value;
+          }
+          // Case-insensitive text comparison
+          return fieldValue.toString().toLowerCase() === filter.value.toString().toLowerCase();
+        
         case "greaterThan":
           return Number(fieldValue) > Number(filter.value);
+        
         case "lessThan":
           return Number(fieldValue) < Number(filter.value);
+        
+        case "between":
+          // Handle date ranges
+          if (filter.field.includes("fecha") || filter.field.includes("Fecha")) {
+            const [fromDate, toDate] = filter.value.toString().split('|');
+            if (!fromDate || !toDate) return true;
+            
+            const docDate = new Date(fieldValue.toString());
+            const from = new Date(fromDate);
+            const to = new Date(toDate);
+            
+            // Include start and end dates (inclusive range)
+            return docDate >= from && docDate <= to;
+          }
+          return true;
+        
         case "before":
-          if (fieldValue instanceof Date) {
-            return fieldValue < new Date(filter.value.toString());
-          }
-          return false;
+          const docDateBefore = new Date(fieldValue.toString());
+          const beforeDate = new Date(filter.value.toString());
+          return docDateBefore < beforeDate;
+        
         case "after":
-          if (fieldValue instanceof Date) {
-            return fieldValue > new Date(filter.value.toString());
-          }
-          return false;
+          const docDateAfter = new Date(fieldValue.toString());
+          const afterDate = new Date(filter.value.toString());
+          return docDateAfter > afterDate;
+        
         default:
           return true;
       }
