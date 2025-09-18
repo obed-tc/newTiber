@@ -44,11 +44,10 @@ export const AttributeManager = ({ isOpen, onClose, onSave }: AttributeManagerPr
   const documentTypeOptions = ["Pagaré", "Solicitud de crédito", "Consentimiento informado"];
 
   const handleSave = () => {
-    saveAttributes(attributes);
     onSave(attributes);
     toast({
-      title: "Atributos actualizados",
-      description: "Los atributos de documentos han sido guardados correctamente.",
+      title: "Atributos guardados",
+      description: "Los campos personalizados han sido guardados correctamente.",
     });
     onClose();
   };
@@ -75,6 +74,12 @@ export const AttributeManager = ({ isOpen, onClose, onSave }: AttributeManagerPr
 
     const updatedAttributes = [...attributes, attribute];
     saveAttributes(updatedAttributes);
+    
+    toast({
+      title: "Atributo agregado",
+      description: `Campo "${attribute.label}" agregado correctamente.`,
+    });
+    
     setNewAttribute({
       name: "",
       label: "",
@@ -90,6 +95,11 @@ export const AttributeManager = ({ isOpen, onClose, onSave }: AttributeManagerPr
   const removeAttribute = (id: string) => {
     const updatedAttributes = attributes.filter(attr => attr.id !== id);
     saveAttributes(updatedAttributes);
+    
+    toast({
+      title: "Atributo eliminado",
+      description: "El campo personalizado ha sido eliminado.",
+    });
   };
 
   const addOption = () => {

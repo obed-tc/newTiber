@@ -112,53 +112,58 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
             </Badge>
           </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar className="h-10 w-10 border-2 border-primary/20">
-                  <AvatarFallback className="bg-gradient-primary text-primary-foreground font-semibold">
-                    {user.name.split(" ").map(n => n[0]).join("").toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user.name}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user.email}
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-               <DropdownMenuItem className="cursor-pointer">
-                 <User className="mr-2 h-4 w-4" />
-                 <span>Perfil</span>
-               </DropdownMenuItem>
-               {user.role === "admin" && (
-                 <DropdownMenuItem 
-                   className="cursor-pointer"
-                   onClick={() => setIsAttributeManagerOpen(true)}
-                 >
-                   <Settings className="mr-2 h-4 w-4" />
-                   <span>Gestionar Atributos</span>
-                 </DropdownMenuItem>
-               )}
-               <DropdownMenuItem className="cursor-pointer">
-                 <Settings className="mr-2 h-4 w-4" />
-                 <span>Configuración</span>
-               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="cursor-pointer text-destructive focus:text-destructive"
-                onClick={onLogout}
+          <div className="flex items-center gap-3">
+            {/* Botón para gestionar atributos (solo admin) */}
+            {user.role === "admin" && (
+              <Button
+                variant="outline"
+                onClick={() => setIsAttributeManagerOpen(true)}
+                className="bg-background/50 hover:bg-primary hover:text-primary-foreground"
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Cerrar sesión</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <Settings className="w-4 h-4 mr-2" />
+                Campos Personalizados
+              </Button>
+            )}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar className="h-10 w-10 border-2 border-primary/20">
+                    <AvatarFallback className="bg-gradient-primary text-primary-foreground font-semibold">
+                      {user.name.split(" ").map(n => n[0]).join("").toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                 <DropdownMenuItem className="cursor-pointer">
+                   <User className="mr-2 h-4 w-4" />
+                   <span>Perfil</span>
+                 </DropdownMenuItem>
+                 <DropdownMenuItem className="cursor-pointer">
+                   <Settings className="mr-2 h-4 w-4" />
+                   <span>Configuración</span>
+                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                  onClick={onLogout}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Cerrar sesión</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
