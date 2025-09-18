@@ -246,9 +246,9 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
   // Mapear el tipo de documento seleccionado para usar en filtros dinámicos
   const getSelectedDocumentTypeForFilters = () => {
     switch (documentTypeFilter) {
-      case "pagare": return "Pagaré";
-      case "solicitud": return "Solicitud de crédito";
-      case "consentimiento": return "Consentimiento informado";
+      case "Pagaré": return "Pagaré";
+      case "Solicitud de Crédito": return "Solicitud de crédito";
+      case "Consentimiento Informado": return "Consentimiento informado";
       default: return "";
     }
   };
