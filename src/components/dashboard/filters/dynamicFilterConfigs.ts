@@ -58,29 +58,38 @@ export const getFilterConfigsByDocumentType = (documentType: string): FilterConf
   }
 };
 
-export const getFilterCategoriesByDocumentType = (documentType: string, availableFilters: FilterConfig[]) => {
+export const getFilterCategoriesByDocumentType = (documentType: string, availableFilters: FilterConfig[], customAttributes: any[] = []) => {
   const common = availableFilters.filter(f => commonFields.some(cf => cf.field === f.field));
+  
+  // Convert custom attributes to FilterConfig format
+  const customFilters: FilterConfig[] = customAttributes
+    .filter(attr => attr.documentTypes.includes(documentType))
+    .map(attr => ({
+      field: `custom_${attr.name}`,
+      label: attr.label,
+      type: attr.type,
+      options: attr.options
+    }));
+  
+  let standardVariables: FilterConfig[] = [];
   
   switch (documentType) {
     case "Pagaré":
-      return {
-        fijos: common,
-        variables: availableFilters.filter(f => pagareFields.some(pf => pf.field === f.field)),
-      };
+      standardVariables = availableFilters.filter(f => pagareFields.some(pf => pf.field === f.field));
+      break;
     case "Solicitud de crédito":
-      return {
-        fijos: common,
-        variables: availableFilters.filter(f => solicitudCreditoFields.some(scf => scf.field === f.field)),
-      };
+      standardVariables = availableFilters.filter(f => solicitudCreditoFields.some(scf => scf.field === f.field));
+      break;
     case "Consentimiento informado":
-      return {
-        fijos: common,
-        variables: availableFilters.filter(f => consentimientoFields.some(cf => cf.field === f.field)),
-      };
+      standardVariables = availableFilters.filter(f => consentimientoFields.some(cf => cf.field === f.field));
+      break;
     default:
-      return {
-        fijos: common,
-        variables: [],
-      };
+      standardVariables = [];
+      break;
   }
+  
+  return {
+    fijos: common,
+    variables: [...standardVariables, ...customFilters],
+  };
 };

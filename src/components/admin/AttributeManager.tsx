@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, X, Settings, Tag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useCustomAttributes, CustomAttribute } from "@/hooks/useCustomAttributes";
 
 interface DocumentAttribute {
   id: string;
@@ -22,32 +23,13 @@ interface DocumentAttribute {
 interface AttributeManagerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (attributes: DocumentAttribute[]) => void;
+  onSave: (attributes: CustomAttribute[]) => void;
 }
 
 export const AttributeManager = ({ isOpen, onClose, onSave }: AttributeManagerProps) => {
   const { toast } = useToast();
-  const [attributes, setAttributes] = useState<DocumentAttribute[]>([
-    {
-      id: "1",
-      name: "sucursal",
-      label: "Sucursal de origen",
-      type: "select",
-      documentTypes: ["Pagaré"],
-      options: ["Bogotá", "Medellín", "Cali", "Barranquilla"],
-      required: false
-    },
-    {
-      id: "2", 
-      name: "agente_comercial",
-      label: "Agente comercial",
-      type: "text",
-      documentTypes: ["Pagaré", "Solicitud de crédito"],
-      required: false
-    }
-  ]);
-
-  const [newAttribute, setNewAttribute] = useState<Partial<DocumentAttribute>>({
+  const { attributes, saveAttributes } = useCustomAttributes();
+  const [newAttribute, setNewAttribute] = useState<Partial<CustomAttribute>>({
     name: "",
     label: "",
     type: "text",
@@ -62,6 +44,7 @@ export const AttributeManager = ({ isOpen, onClose, onSave }: AttributeManagerPr
   const documentTypeOptions = ["Pagaré", "Solicitud de crédito", "Consentimiento informado"];
 
   const handleSave = () => {
+    saveAttributes(attributes);
     onSave(attributes);
     toast({
       title: "Atributos actualizados",
@@ -80,7 +63,7 @@ export const AttributeManager = ({ isOpen, onClose, onSave }: AttributeManagerPr
       return;
     }
 
-    const attribute: DocumentAttribute = {
+    const attribute: CustomAttribute = {
       id: Date.now().toString(),
       name: newAttribute.name || "",
       label: newAttribute.label || "",
@@ -90,7 +73,8 @@ export const AttributeManager = ({ isOpen, onClose, onSave }: AttributeManagerPr
       required: newAttribute.required || false
     };
 
-    setAttributes([...attributes, attribute]);
+    const updatedAttributes = [...attributes, attribute];
+    saveAttributes(updatedAttributes);
     setNewAttribute({
       name: "",
       label: "",
@@ -104,7 +88,8 @@ export const AttributeManager = ({ isOpen, onClose, onSave }: AttributeManagerPr
   };
 
   const removeAttribute = (id: string) => {
-    setAttributes(attributes.filter(attr => attr.id !== id));
+    const updatedAttributes = attributes.filter(attr => attr.id !== id);
+    saveAttributes(updatedAttributes);
   };
 
   const addOption = () => {

@@ -30,8 +30,10 @@ import { es } from "date-fns/locale";
 import { AdvancedFiltersModal } from "./filters/AdvancedFiltersModal";
 import { ActiveFilters } from "./filters/ActiveFilters";
 import { documentFilterConfigs } from "./filters/filterConfigs";
-import { getFilterConfigsByDocumentType } from "./filters/dynamicFilterConfigs";
+import { getFilterConfigsByDocumentType, getFilterCategoriesByDocumentType } from "./filters/dynamicFilterConfigs";
 import { FilterValue } from "./filters/types";
+import { DocumentUploadModal } from "./DocumentUploadModal";
+import { useCustomAttributes } from "@/hooks/useCustomAttributes";
 
 interface Document {
   id: string;
@@ -242,6 +244,9 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [advancedFilters, setAdvancedFilters] = useState<FilterValue[]>([]);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  
+  const { attributes, saveDocumentAttributes } = useCustomAttributes();
   
   // Mapear el tipo de documento seleccionado para usar en filtros dinámicos
   const getSelectedDocumentTypeForFilters = () => {
@@ -339,6 +344,18 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
             // Include start and end dates (inclusive range)
             return docDate >= from && docDate <= to;
           }
+          // Handle number ranges
+          else if (typeof fieldValue === 'number') {
+            const [minValue, maxValue] = filter.value.toString().split('|');
+            if (!minValue || !maxValue) return true;
+            
+            const numValue = Number(fieldValue);
+            const min = Number(minValue);
+            const max = Number(maxValue);
+            
+            // Include min and max values (inclusive range)
+            return numValue >= min && numValue <= max;
+          }
           return true;
         
         case "before":
@@ -379,18 +396,26 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
   };
 
   const handleUpload = () => {
-    // Simular carga de documento
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.pdf,.docx,.jpg,.jpeg,.png';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        console.log("Cargando documento:", file.name);
-        // Aquí se implementaría la lógica real de carga
-      }
-    };
-    input.click();
+    setShowUploadModal(true);
+  };
+
+  const handleDocumentUpload = (file: File, attributes: any[], documentType: string) => {
+    // Generate a unique document ID
+    const documentId = `DOC-${Date.now()}`;
+    
+    // Save the document attributes
+    saveDocumentAttributes(documentId, attributes);
+    
+    // Here you would implement the actual file upload logic
+    console.log("Uploading document:", {
+      id: documentId,
+      file: file.name,
+      type: documentType,
+      attributes
+    });
+    
+    // Close modal after successful upload
+    setShowUploadModal(false);
   };
 
   return (
@@ -480,6 +505,7 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
         availableFilters={dynamicFilterConfigs}
         currentFilters={advancedFilters}
         selectedDocumentType={selectedDocumentTypeForFilters}
+        customAttributes={attributes}
       />
 
       {/* Tabla de documentos */}
@@ -568,6 +594,15 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Document Upload Modal */}
+      {userRole === "admin" && (
+        <DocumentUploadModal
+          isOpen={showUploadModal}
+          onClose={() => setShowUploadModal(false)}
+          onUpload={handleDocumentUpload}
+        />
+      )}
     </div>
   );
 };

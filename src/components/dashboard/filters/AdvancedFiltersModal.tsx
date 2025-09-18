@@ -20,6 +20,7 @@ interface AdvancedFiltersModalProps {
   availableFilters: FilterConfig[];
   currentFilters: FilterValue[];
   selectedDocumentType?: string;
+  customAttributes?: any[];
 }
 
 export const AdvancedFiltersModal = ({
@@ -28,12 +29,13 @@ export const AdvancedFiltersModal = ({
   onApplyFilters,
   availableFilters,
   currentFilters,
-  selectedDocumentType
+  selectedDocumentType,
+  customAttributes = []
 }: AdvancedFiltersModalProps) => {
   const [selectedFilters, setSelectedFilters] = useState<FilterValue[]>(currentFilters);
 
   // Update available filters when document type changes
-  const filterCategories = getFilterCategoriesByDocumentType(selectedDocumentType || "", availableFilters);
+  const filterCategories = getFilterCategoriesByDocumentType(selectedDocumentType || "", availableFilters, customAttributes);
 
   // Reset selected filters when document type changes
   React.useEffect(() => {
@@ -85,28 +87,79 @@ export const AdvancedFiltersModal = ({
         );
 
       case "number":
-        return (
-          <div className="grid grid-cols-3 gap-2">
-            <Select value={filter.operator} onValueChange={(value) => updateFilter(index, { operator: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="equals">Igual a</SelectItem>
-                <SelectItem value="greaterThan">Mayor que</SelectItem>
-                <SelectItem value="lessThan">Menor que</SelectItem>
-                <SelectItem value="between">Entre</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input
-              type="number"
-              placeholder="Valor..."
-              value={filter.value.toString()}
-              onChange={(e) => updateFilter(index, { value: e.target.value })}
-              className="col-span-2"
-            />
-          </div>
-        );
+        if (filter.operator === "between") {
+          // Parse existing range value or set defaults
+          const currentRange = typeof filter.value === 'string' && filter.value.includes('|') 
+            ? filter.value.split('|') 
+            : ['', ''];
+          const [minValue, maxValue] = currentRange;
+
+          return (
+            <div className="space-y-2">
+              <Select value={filter.operator} onValueChange={(value) => updateFilter(index, { operator: value, value: value === "between" ? "|" : "" })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="equals">Igual a</SelectItem>
+                  <SelectItem value="greaterThan">Mayor que</SelectItem>
+                  <SelectItem value="lessThan">Menor que</SelectItem>
+                  <SelectItem value="between">Entre</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground w-12">Mínimo:</Label>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    value={minValue}
+                    onChange={(e) => {
+                      const newValue = `${e.target.value}|${maxValue}`;
+                      updateFilter(index, { value: newValue });
+                    }}
+                    className="flex-1"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground w-12">Máximo:</Label>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    value={maxValue}
+                    onChange={(e) => {
+                      const newValue = `${minValue}|${e.target.value}`;
+                      updateFilter(index, { value: newValue });
+                    }}
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        } else {
+          return (
+            <div className="space-y-2">
+              <Select value={filter.operator} onValueChange={(value) => updateFilter(index, { operator: value, value: value === "between" ? "|" : "" })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="equals">Igual a</SelectItem>
+                  <SelectItem value="greaterThan">Mayor que</SelectItem>
+                  <SelectItem value="lessThan">Menor que</SelectItem>
+                  <SelectItem value="between">Entre</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                type="number"
+                placeholder="Valor..."
+                value={filter.value.toString()}
+                onChange={(e) => updateFilter(index, { value: e.target.value })}
+              />
+            </div>
+          );
+        }
 
       case "date":
         // Parse existing range value or set defaults

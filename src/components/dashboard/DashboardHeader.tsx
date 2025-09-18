@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Shield, LogOut, Settings, User, Building2 } from "lucide-react";
 import { AttributeManager } from "@/components/admin/AttributeManager";
+import { CustomAttribute } from "@/hooks/useCustomAttributes";
 
 interface DashboardHeaderProps {
   user: {
@@ -45,7 +46,7 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
     return role === "admin" ? "Administrador" : "Visualizador";
   };
 
-  const handleSaveAttributes = (attributes: any[]) => {
+  const handleSaveAttributes = (attributes: CustomAttribute[]) => {
     console.log("Saved attributes:", attributes);
   };
 
