@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, DollarSign, FileText, User, Building, Settings, X } from "lucide-react";
+import { CalendarDays, DollarSign, FileText, User, Building, Settings, X, Tag } from "lucide-react";
 import { FilterConfig, FilterValue } from "./types";
 import { getFilterCategoriesByDocumentType } from "./dynamicFilterConfigs";
 
@@ -73,7 +73,22 @@ export const AdvancedFiltersModal = ({
   };
 
   const renderFilterInput = (filter: FilterValue, index: number) => {
-    const config = availableFilters.find(f => f.field === filter.field);
+    let config = availableFilters.find(f => f.field === filter.field);
+    
+    // Check if it's a custom attribute
+    if (!config && filter.field.startsWith('custom_')) {
+      const attributeName = filter.field.replace('custom_', '');
+      const customAttr = customAttributes.find(attr => attr.name === attributeName);
+      if (customAttr) {
+        config = {
+          field: filter.field,
+          label: customAttr.label,
+          type: customAttr.type,
+          options: customAttr.options
+        };
+      }
+    }
+    
     if (!config) return null;
 
     switch (config.type) {
@@ -244,9 +259,12 @@ export const AdvancedFiltersModal = ({
             </div>
             
             <Tabs defaultValue="fijos" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className={`grid w-full ${customAttributes && customAttributes.length > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                 <TabsTrigger value="fijos">Campos Fijos</TabsTrigger>
                 <TabsTrigger value="variables">Campos Variables</TabsTrigger>
+                {customAttributes && customAttributes.length > 0 && (
+                  <TabsTrigger value="personalizados">Campos Personalizados</TabsTrigger>
+                )}
               </TabsList>
               
               <TabsContent value="fijos" className="mt-4">
@@ -302,6 +320,50 @@ export const AdvancedFiltersModal = ({
                   )}
                 </div>
               </TabsContent>
+
+              {customAttributes && customAttributes.length > 0 && (
+                <TabsContent value="personalizados" className="mt-4">
+                  <div className="mb-2">
+                    <p className="text-xs text-muted-foreground">
+                      {selectedDocumentType 
+                        ? `Campos personalizados para ${selectedDocumentType}` 
+                        : "Selecciona un tipo de documento para ver campos personalizados"}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {customAttributes
+                      .filter(attr => !selectedDocumentType || attr.documentTypes.includes(selectedDocumentType))
+                      .length > 0 ? (
+                      customAttributes
+                        .filter(attr => !selectedDocumentType || attr.documentTypes.includes(selectedDocumentType))
+                        .map((attr) => (
+                          <Button
+                            key={attr.id}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addFilter({
+                              field: `custom_${attr.name}`,
+                              label: attr.label,
+                              type: attr.type,
+                              options: attr.options
+                            })}
+                            disabled={selectedFilters.some(f => f.field === `custom_${attr.name}`)}
+                            className="justify-start h-auto p-2 text-xs"
+                          >
+                            <Tag className="w-3 h-3 mr-1" />
+                            {attr.label}
+                          </Button>
+                        ))
+                    ) : (
+                      <div className="col-span-2 text-center text-muted-foreground text-xs py-4">
+                        {selectedDocumentType 
+                          ? "No hay campos personalizados para este tipo de documento"
+                          : "Selecciona un tipo de documento para ver campos personalizados"}
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              )}
             </Tabs>
           </div>
 

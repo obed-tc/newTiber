@@ -47,7 +47,8 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
   };
 
   const handleSaveAttributes = (attributes: CustomAttribute[]) => {
-    console.log("Saved attributes:", attributes);
+    // Attributes are already saved in AttributeManager through useCustomAttributes hook
+    console.log("Attributes updated successfully:", attributes);
   };
 
   return (
