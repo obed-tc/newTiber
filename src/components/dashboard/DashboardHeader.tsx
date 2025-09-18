@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
@@ -12,8 +11,6 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Shield, LogOut, Settings, User, Building2 } from "lucide-react";
-import { AttributeManager } from "@/components/admin/AttributeManager";
-import { CustomAttribute } from "@/hooks/useCustomAttributes";
 
 interface DashboardHeaderProps {
   user: {
@@ -27,7 +24,6 @@ interface DashboardHeaderProps {
 }
 
 export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: DashboardHeaderProps) => {
-  const [isAttributeManagerOpen, setIsAttributeManagerOpen] = useState(false);
   
   // Workspaces disponibles (esto vendría de una API en implementación real)
   const availableWorkspaces = [
@@ -46,10 +42,6 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
     return role === "admin" ? "Administrador" : "Visualizador";
   };
 
-  const handleSaveAttributes = (attributes: CustomAttribute[]) => {
-    // Attributes are already saved in AttributeManager through useCustomAttributes hook
-    console.log("Attributes updated successfully:", attributes);
-  };
 
   return (
     <header className="bg-white/90 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
@@ -113,18 +105,6 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Botón para gestionar atributos (solo admin) */}
-            {user.role === "admin" && (
-              <Button
-                variant="outline"
-                onClick={() => setIsAttributeManagerOpen(true)}
-                className="bg-background/50 hover:bg-primary hover:text-primary-foreground"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Campos Personalizados
-              </Button>
-            )}
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -166,12 +146,6 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
           </div>
         </div>
       </div>
-
-      <AttributeManager 
-        isOpen={isAttributeManagerOpen}
-        onClose={() => setIsAttributeManagerOpen(false)}
-        onSave={handleSaveAttributes}
-      />
     </header>
   );
 };

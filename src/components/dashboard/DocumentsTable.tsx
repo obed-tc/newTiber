@@ -34,6 +34,8 @@ import { getFilterConfigsByDocumentType, getFilterCategoriesByDocumentType } fro
 import { FilterValue } from "./filters/types";
 import { DocumentUploadModal } from "./DocumentUploadModal";
 import { useCustomAttributes } from "@/hooks/useCustomAttributes";
+import { AttributeManager } from "@/components/admin/AttributeManager";
+import { CustomAttribute } from "@/hooks/useCustomAttributes";
 
 interface Document {
   id: string;
@@ -245,6 +247,7 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
   const [advancedFilters, setAdvancedFilters] = useState<FilterValue[]>([]);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [isAttributeManagerOpen, setIsAttributeManagerOpen] = useState(false);
   
   const { attributes, saveDocumentAttributes, getDocumentAttributes } = useCustomAttributes();
   
@@ -481,6 +484,11 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
     setShowUploadModal(false);
   };
 
+  const handleSaveAttributes = (attributes: CustomAttribute[]) => {
+    // Attributes are already saved in AttributeManager through useCustomAttributes hook
+    console.log("Attributes updated successfully:", attributes);
+  };
+
   return (
     <div className="space-y-6">
       {/* Filtros */}
@@ -492,7 +500,7 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -545,6 +553,18 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
                 </Badge>
               )}
             </Button>
+
+            {/* Botón para gestionar atributos (solo admin) */}
+            {userRole === "admin" && (
+              <Button
+                variant="outline"
+                onClick={() => setIsAttributeManagerOpen(true)}
+                className="bg-background/50 hover:bg-primary hover:text-primary-foreground"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Campos Personalizados
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -664,6 +684,15 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
           isOpen={showUploadModal}
           onClose={() => setShowUploadModal(false)}
           onUpload={handleDocumentUpload}
+        />
+      )}
+
+      {/* Attribute Manager Modal */}
+      {userRole === "admin" && (
+        <AttributeManager 
+          isOpen={isAttributeManagerOpen}
+          onClose={() => setIsAttributeManagerOpen(false)}
+          onSave={handleSaveAttributes}
         />
       )}
     </div>
