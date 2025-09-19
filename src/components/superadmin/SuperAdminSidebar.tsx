@@ -55,7 +55,7 @@ export const SuperAdminSidebar = ({ currentView, onViewChange }: SuperAdminSideb
       <SidebarContent>
         {/* Header con logo de Tiver */}
         <div className="flex flex-col items-center py-6 px-4 border-b border-border/20">
-          <div className="w-16 h-16 mb-3 rounded-xl overflow-hidden bg-white shadow-lg">
+          <div className="w-16 h-16 mb-3 rounded-xl overflow-hidden bg-primary shadow-lg">
             <img 
               src={tiverLogo} 
               alt="Tiver Logo" 
