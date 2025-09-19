@@ -29,7 +29,7 @@ const solicitudCreditoFields: FilterConfig[] = [
   { field: "montoAprobado", label: "Monto Aprobado", type: "number" },
   { field: "ciudad", label: "Ciudad", type: "text" },
   { field: "sucursal", label: "Sucursal", type: "text" },
-  { field: "lineaCredito", label: "Línea de Crédito", type: "select", options: ["Consumo", "Vivienda", "Comercial", "Microcrédito"] }
+  { field: "lineaCredito", label: "Línea de Crédito", type: "text" }
 ];
 
 // Campos específicos para Consentimiento Informado
@@ -39,7 +39,7 @@ const consentimientoFields: FilterConfig[] = [
   { field: "acudiente", label: "Acudiente", type: "text" },
   { field: "idAcudiente", label: "ID Acudiente", type: "text" },
   { field: "patologia", label: "Patología", type: "text" },
-  { field: "areaProcedimiento", label: "Área de Procedimiento", type: "select", options: ["Cirugía General", "Cardiología", "Neurología", "Pediatría", "Ginecología", "Ortopedia"] },
+  { field: "areaProcedimiento", label: "Área de Procedimiento", type: "text" },
   { field: "clinica", label: "Clínica", type: "text" },
   { field: "ciudad", label: "Ciudad", type: "text" }
 ];

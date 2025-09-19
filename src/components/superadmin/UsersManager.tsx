@@ -27,6 +27,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Plus, 
@@ -113,8 +114,8 @@ export const UsersManager = () => {
     name: "",
     email: "",
     role: "viewer",
-    workspace: "",
-    clientId: ""
+    workspaces: [] as string[],
+    workspaceNames: [] as string[]
   });
   const { toast } = useToast();
 
@@ -128,36 +129,57 @@ export const UsersManager = () => {
   });
 
   const handleCreateUser = () => {
-    if (!newUser.name || !newUser.email || !newUser.clientId) {
+    if (!newUser.name || !newUser.email || newUser.workspaces.length === 0) {
       toast({
         title: "Error",
-        description: "Todos los campos son requeridos",
+        description: "Nombre, email y al menos un workspace son requeridos",
         variant: "destructive"
       });
       return;
     }
 
-    const workspace = mockWorkspaces.find(w => w.id === newUser.clientId);
-    const user: User = {
-      id: Date.now().toString(),
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role as "admin" | "viewer",
-      workspace: workspace?.name || "",
-      clientId: newUser.clientId,
-      status: "active",
-      lastLogin: "-",
-      createdAt: new Date().toISOString().split('T')[0]
-    };
+    // Create one user record for each selected workspace
+    const newUsers: User[] = newUser.workspaces.map(workspaceId => {
+      const workspace = mockWorkspaces.find(w => w.id === workspaceId);
+      return {
+        id: `${Date.now()}-${workspaceId}`,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role as "admin" | "viewer",
+        workspace: workspace?.name || "",
+        clientId: workspaceId,
+        status: "active",
+        lastLogin: "-",
+        createdAt: new Date().toISOString().split('T')[0]
+      };
+    });
 
-    setUsers([...users, user]);
-    setNewUser({ name: "", email: "", role: "viewer", workspace: "", clientId: "" });
+    setUsers([...users, ...newUsers]);
+    setNewUser({ name: "", email: "", role: "viewer", workspaces: [], workspaceNames: [] });
     setIsCreateDialogOpen(false);
     
     toast({
       title: "Usuario creado",
-      description: `${user.name} ha sido creado exitosamente`
+      description: `${newUser.name} ha sido asignado a ${newUser.workspaces.length} workspace(s)`
     });
+  };
+
+  const handleWorkspaceToggle = (workspaceId: string, workspaceName: string) => {
+    const isSelected = newUser.workspaces.includes(workspaceId);
+    
+    if (isSelected) {
+      setNewUser({
+        ...newUser,
+        workspaces: newUser.workspaces.filter(id => id !== workspaceId),
+        workspaceNames: newUser.workspaceNames.filter(name => name !== workspaceName)
+      });
+    } else {
+      setNewUser({
+        ...newUser,
+        workspaces: [...newUser.workspaces, workspaceId],
+        workspaceNames: [...newUser.workspaceNames, workspaceName]
+      });
+    }
   };
 
   const handleToggleStatus = (user: User) => {
@@ -380,29 +402,29 @@ export const UsersManager = () => {
             </div>
             
             <div>
-              <Label htmlFor="workspace">Workspace *</Label>
-              <Select 
-                value={newUser.clientId} 
-                onValueChange={(value) => {
-                  const workspace = mockWorkspaces.find(w => w.id === value);
-                  setNewUser({
-                    ...newUser, 
-                    clientId: value,
-                    workspace: workspace?.name || ""
-                  });
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un workspace" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockWorkspaces.map((workspace) => (
-                    <SelectItem key={workspace.id} value={workspace.id}>
+              <Label htmlFor="workspaces">Workspaces *</Label>
+              <div className="space-y-2 border rounded-md p-3 max-h-40 overflow-y-auto">
+                {mockWorkspaces.map((workspace) => (
+                  <div key={workspace.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={workspace.id}
+                      checked={newUser.workspaces.includes(workspace.id)}
+                      onCheckedChange={() => handleWorkspaceToggle(workspace.id, workspace.name)}
+                    />
+                    <Label 
+                      htmlFor={workspace.id} 
+                      className="text-sm font-normal cursor-pointer flex-1"
+                    >
                       {workspace.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </Label>
+                  </div>
+                ))}
+              </div>
+              {newUser.workspaces.length > 0 && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {newUser.workspaces.length} workspace(s) seleccionado(s)
+                </p>
+              )}
             </div>
             
             <div>

@@ -12,6 +12,13 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   Download, 
   Search, 
@@ -23,7 +30,8 @@ import {
   FileText,
   Settings,
   FilterX,
-  Upload
+  Upload,
+  Eye
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -248,6 +256,8 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isAttributeManagerOpen, setIsAttributeManagerOpen] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   
   const { attributes, saveDocumentAttributes, getDocumentAttributes } = useCustomAttributes();
   
@@ -410,6 +420,11 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
   const handleDownload = (documentId: string) => {
     // Simular descarga
     console.log("Descargando documento:", documentId);
+  };
+
+  const handleViewDetails = (document: Document) => {
+    setSelectedDocument(document);
+    setShowDetailsModal(true);
   };
 
   const handleUpload = () => {
@@ -656,18 +671,26 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        {userRole === "admin" ? (
+                        <div className="flex items-center justify-center gap-2">
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleDownload(doc.id)}
+                            onClick={() => handleViewDetails(doc)}
                             className="bg-background/50 hover:bg-primary hover:text-primary-foreground"
                           >
-                            <Download className="w-4 h-4" />
+                            <Eye className="w-4 h-4" />
                           </Button>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">Solo visualización</span>
-                        )}
+                          {userRole === "admin" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDownload(doc.id)}
+                              className="bg-background/50 hover:bg-primary hover:text-primary-foreground"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -695,6 +718,104 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
           onSave={handleSaveAttributes}
         />
       )}
+
+      {/* Document Details Modal */}
+      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalles del Documento</DialogTitle>
+            <DialogDescription>
+              Información detallada del documento seleccionado
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedDocument && (
+            <div className="space-y-6">
+              {/* Datos básicos */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Datos Básicos</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">ID Documento</label>
+                    <p className="font-medium">{selectedDocument.id}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Tipo de Documento</label>
+                    <p className="font-medium">{selectedDocument.tipoDocumento}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Nombre del Título</label>
+                    <p className="font-medium">{selectedDocument.nombreDelTitulo}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Proceso</label>
+                    <p className="font-medium">{selectedDocument.proceso}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Subproceso</label>
+                    <p className="font-medium">{selectedDocument.subproceso}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Fecha de Ingreso</label>
+                    <p className="font-medium">
+                      {format(selectedDocument.fechaIngreso, "dd MMM yyyy", { locale: es })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Datos específicos según tipo de documento */}
+              {(selectedDocument.tipoDocumento === "Pagaré" || selectedDocument.tipoDocumento === "Solicitud de Crédito") && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Información Crediticia</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Deudor</label>
+                      <p className="font-medium">{selectedDocument.nombreDeudor}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">ID Deudor</label>
+                      <p className="font-medium">{selectedDocument.idDeudor}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Codeudor</label>
+                      <p className="font-medium">{selectedDocument.nombreCodeudor}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">ID Codeudor</label>
+                      <p className="font-medium">{selectedDocument.idCodeudor}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedDocument.tipoDocumento === "Consentimiento Informado" && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Información del Paciente</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Paciente</label>
+                      <p className="font-medium">{selectedDocument.nombreDeudor}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">ID Paciente</label>
+                      <p className="font-medium">{selectedDocument.idDeudor}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Acudiente</label>
+                      <p className="font-medium">{selectedDocument.nombreCodeudor}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">ID Acudiente</label>
+                      <p className="font-medium">{selectedDocument.idCodeudor}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

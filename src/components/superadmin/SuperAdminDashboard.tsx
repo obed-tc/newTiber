@@ -157,16 +157,6 @@ export const SuperAdminDashboard = () => {
               </Badge>
             </div>
             
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 bg-success rounded-full"></div>
-                <span className="text-sm">Sistema operativo</span>
-              </div>
-              <Badge variant="outline" className="text-success border-success">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Normal
-              </Badge>
-            </div>
           </CardContent>
         </Card>
 
