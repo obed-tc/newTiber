@@ -55,7 +55,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const updateLastAccess = async () => {
     if (!user) return;
-    const { error } = await supabase.rpc("update_ultimo_acceso");
+    // const { error } = await supabase.rpc("update_ultimo_acceso");
+    const { error } = await supabase.rpc("update_ultimo_acceso", {
+      p_user_id: user.id,
+    });
+
     if (error) console.error("Error updating ultimo_acceso:", error);
   };
 

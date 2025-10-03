@@ -19,7 +19,7 @@ const Index = () => {
 
   console.log("Usuario actual:", usuario);
   if (usuario) {
-    if (usuario.rol === "Administrador") {
+    if (usuario.rol === "SuperAdmin") {
       return <SuperAdminPage />;
     }
 

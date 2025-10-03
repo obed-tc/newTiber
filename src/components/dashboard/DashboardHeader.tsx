@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger 
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +24,7 @@ interface DashboardHeaderProps {
 }
 
 export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: DashboardHeaderProps) => {
-  
+
   // Workspaces disponibles (esto vendría de una API en implementación real)
   const availableWorkspaces = [
     "TiverDocs Platform",
@@ -67,7 +67,7 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
                 <span className="text-xs text-primary/80 font-medium">Workspace Activo</span>
                 <Select value={user.workspace} onValueChange={onWorkspaceChange}>
                   <SelectTrigger className="w-[220px] bg-transparent border-0 h-auto p-0 text-sm font-semibold text-foreground focus:ring-0 shadow-none hover:text-primary transition-colors [&>span]:bg-transparent [&>span]:text-inherit">
-                    <SelectValue 
+                    <SelectValue
                       placeholder="Seleccionar workspace"
                       className="bg-transparent text-inherit"
                     />
@@ -77,8 +77,8 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
                       <span className="text-xs font-medium text-muted-foreground">Workspaces Disponibles</span>
                     </div>
                     {availableWorkspaces.map((workspace) => (
-                      <SelectItem 
-                        key={workspace} 
+                      <SelectItem
+                        key={workspace}
                         value={workspace}
                         className="cursor-pointer focus:bg-primary/10 focus:text-primary py-3 px-3 rounded-md m-1"
                       >
@@ -110,7 +110,8 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10 border-2 border-primary/20">
                     <AvatarFallback className="bg-gradient-primary text-primary-foreground font-semibold">
-                      {user.name.split(" ").map(n => n[0]).join("").toUpperCase()}
+                      {user.full_name?.split(" ").map(n => n[0]).join("").toUpperCase() ?? "?"}
+
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -125,16 +126,16 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                 <DropdownMenuItem className="cursor-pointer">
-                   <User className="mr-2 h-4 w-4" />
-                   <span>Perfil</span>
-                 </DropdownMenuItem>
-                 <DropdownMenuItem className="cursor-pointer">
-                   <Settings className="mr-2 h-4 w-4" />
-                   <span>Configuración</span>
-                 </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Perfil</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Configuración</span>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   className="cursor-pointer text-destructive focus:text-destructive"
                   onClick={onLogout}
                 >

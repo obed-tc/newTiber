@@ -28,27 +28,30 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Search, MoveHorizontal as MoreHorizontal, CreditCard as Edit, Trash2, UserCheck, UserX, Filter, Loader as Loader2 } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Trash2, UserCheck, UserX, Filter, Loader2, Eye, EyeOff, Edit } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useUsers, UserRole } from "@/hooks/useUsers";
+import { useUsers, UserRole, UserWithWorkspaces } from "@/hooks/useUsers";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
 
 export const UsersManager = () => {
-  const { users, loading: usersLoading, createUser, toggleUserStatus, deleteUser } = useUsers();
+  const { users, loading: usersLoading, createUser, updateUser, toggleUserStatus, deleteUser } = useUsers();
   const { workspaces, loading: workspacesLoading } = useWorkspaces();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedWorkspace, setSelectedWorkspace] = useState<string>("all");
   const [selectedRole, setSelectedRole] = useState<string>("all");
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState({
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserWithWorkspaces | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
     full_name: "",
     email: "",
+    password: "",
     rol: "Visualizador" as UserRole,
     workspaceIds: [] as string[]
   });
@@ -75,7 +78,7 @@ export const UsersManager = () => {
   const filteredUsers = useMemo(() => {
     return flattenedUsers.filter(user => {
       const matchesSearch = user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           user.email.toLowerCase().includes(searchTerm.toLowerCase());
+        user.email.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesWorkspace = selectedWorkspace === "all" || user.workspace_id === selectedWorkspace;
       const matchesRole = selectedRole === "all" || user.workspace_rol === selectedRole;
 
@@ -83,43 +86,100 @@ export const UsersManager = () => {
     });
   }, [flattenedUsers, searchTerm, selectedWorkspace, selectedRole]);
 
-  const handleCreateUser = async () => {
-    if (!newUser.full_name || !newUser.email || newUser.workspaceIds.length === 0) {
+  const generatePassword = () => {
+    const length = 12;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    setFormData({ ...formData, password });
+  };
+
+  const handleOpenCreateDialog = () => {
+    setEditingUser(null);
+    setFormData({
+      full_name: "",
+      email: "",
+      password: "",
+      rol: "Visualizador",
+      workspaceIds: []
+    });
+    setShowPassword(false);
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenEditDialog = (user: UserWithWorkspaces) => {
+    setEditingUser(user);
+    setFormData({
+      full_name: user.full_name,
+      email: user.email,
+      password: "", // No mostrar la contraseña actual por seguridad
+      rol: user.rol,
+      workspaceIds: user.workspaces.map(ws => ws.workspace_id)
+    });
+    setShowPassword(false);
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.full_name || !formData.email || formData.workspaceIds.length === 0) {
+      return;
+    }
+
+    // Validación adicional para creación: contraseña requerida
+    if (!editingUser && (!formData.password || formData.password.length < 6)) {
       return;
     }
 
     try {
-      await createUser({
-        full_name: newUser.full_name,
-        email: newUser.email,
-        rol: newUser.rol,
-        workspaceIds: newUser.workspaceIds
-      });
+      if (editingUser) {
+        // Editar usuario existente
+        await updateUser(editingUser.id, {
+          full_name: formData.full_name,
+          email: formData.email,
+          rol: formData.rol,
+          workspaceIds: formData.workspaceIds,
+          ...(formData.password && { password: formData.password }) // Solo actualizar contraseña si se proporciona
+        });
+      } else {
+        // Crear nuevo usuario
+        await createUser({
+          full_name: formData.full_name,
+          email: formData.email,
+          password: formData.password,
+          rol: formData.rol,
+          workspaceIds: formData.workspaceIds
+        });
+      }
 
-      setNewUser({
+      setFormData({
         full_name: "",
         email: "",
+        password: "",
         rol: "Visualizador",
         workspaceIds: []
       });
-      setIsCreateDialogOpen(false);
+      setShowPassword(false);
+      setIsDialogOpen(false);
+      setEditingUser(null);
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.error('Error saving user:', error);
     }
   };
 
   const handleWorkspaceToggle = (workspaceId: string) => {
-    const isSelected = newUser.workspaceIds.includes(workspaceId);
+    const isSelected = formData.workspaceIds.includes(workspaceId);
 
     if (isSelected) {
-      setNewUser({
-        ...newUser,
-        workspaceIds: newUser.workspaceIds.filter(id => id !== workspaceId)
+      setFormData({
+        ...formData,
+        workspaceIds: formData.workspaceIds.filter(id => id !== workspaceId)
       });
     } else {
-      setNewUser({
-        ...newUser,
-        workspaceIds: [...newUser.workspaceIds, workspaceId]
+      setFormData({
+        ...formData,
+        workspaceIds: [...formData.workspaceIds, workspaceId]
       });
     }
   };
@@ -133,10 +193,12 @@ export const UsersManager = () => {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    try {
-      await deleteUser(userId);
-    } catch (error) {
-      console.error('Error deleting user:', error);
+    if (window.confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.')) {
+      try {
+        await deleteUser(userId);
+      } catch (error) {
+        console.error('Error deleting user:', error);
+      }
     }
   };
 
@@ -158,6 +220,18 @@ export const UsersManager = () => {
     return new Date(dateString).toLocaleDateString('es-CO');
   };
 
+  const isFormValid = () => {
+    const basicFieldsValid = formData.full_name && formData.email && formData.workspaceIds.length > 0;
+
+    if (editingUser) {
+      // Para edición, la contraseña es opcional
+      return basicFieldsValid;
+    } else {
+      // Para creación, la contraseña es requerida
+      return basicFieldsValid && formData.password && formData.password.length >= 6;
+    }
+  };
+
   if (usersLoading || workspacesLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -177,7 +251,7 @@ export const UsersManager = () => {
                 Administra usuarios y sus permisos por workspace
               </CardDescription>
             </div>
-            <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
+            <Button onClick={handleOpenCreateDialog} className="gap-2">
               <Plus className="h-4 w-4" />
               Nuevo Usuario
             </Button>
@@ -290,6 +364,10 @@ export const UsersManager = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleOpenEditDialog(user)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleToggleStatus(user.id, user.estado)}>
                             {user.estado === "Activo" ? (
                               <>
@@ -321,12 +399,17 @@ export const UsersManager = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Crear Nuevo Usuario</DialogTitle>
+            <DialogTitle>
+              {editingUser ? 'Editar Usuario' : 'Crear Nuevo Usuario'}
+            </DialogTitle>
             <DialogDescription>
-              Agrega un nuevo usuario y asígnalo a uno o más workspaces
+              {editingUser
+                ? `Modifica la información de ${editingUser.full_name}.`
+                : 'Agrega un nuevo usuario y asígnalo a uno o más workspaces.'
+              }
             </DialogDescription>
           </DialogHeader>
 
@@ -335,8 +418,8 @@ export const UsersManager = () => {
               <Label htmlFor="full_name">Nombre completo *</Label>
               <Input
                 id="full_name"
-                value={newUser.full_name}
-                onChange={(e) => setNewUser({...newUser, full_name: e.target.value})}
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                 placeholder="Ej: Juan Pérez"
               />
             </div>
@@ -346,10 +429,60 @@ export const UsersManager = () => {
               <Input
                 id="email"
                 type="email"
-                value={newUser.email}
-                onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="Ej: juan@empresa.com"
+                disabled={!!editingUser} // No permitir cambiar email al editar
               />
+              {editingUser && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  El correo electrónico no se puede modificar
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="password">
+                Contraseña {editingUser ? '' : '*'}
+                {editingUser && <span className="text-muted-foreground text-xs"> (opcional)</span>}
+              </Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder={editingUser ? "Dejar vacío para mantener la actual" : "Mínimo 6 caracteres"}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={generatePassword}
+                >
+                  Generar
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {editingUser
+                  ? 'Completa solo si deseas cambiar la contraseña'
+                  : 'La contraseña debe tener al menos 6 caracteres'
+                }
+              </p>
             </div>
 
             <div>
@@ -359,7 +492,7 @@ export const UsersManager = () => {
                   <div key={workspace.id} className="flex items-center space-x-2">
                     <Checkbox
                       id={workspace.id}
-                      checked={newUser.workspaceIds.includes(workspace.id)}
+                      checked={formData.workspaceIds.includes(workspace.id)}
                       onCheckedChange={() => handleWorkspaceToggle(workspace.id)}
                     />
                     <Label
@@ -371,9 +504,9 @@ export const UsersManager = () => {
                   </div>
                 ))}
               </div>
-              {newUser.workspaceIds.length > 0 && (
+              {formData.workspaceIds.length > 0 && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  {newUser.workspaceIds.length} workspace(s) seleccionado(s)
+                  {formData.workspaceIds.length} workspace(s) seleccionado(s)
                 </p>
               )}
             </div>
@@ -381,8 +514,8 @@ export const UsersManager = () => {
             <div>
               <Label htmlFor="rol">Rol *</Label>
               <Select
-                value={newUser.rol}
-                onValueChange={(value) => setNewUser({...newUser, rol: value as UserRole})}
+                value={formData.rol}
+                onValueChange={(value) => setFormData({ ...formData, rol: value as UserRole })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona un rol" />
@@ -397,11 +530,14 @@ export const UsersManager = () => {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleCreateUser}>
-              Crear Usuario
+            <Button
+              onClick={handleSubmit}
+              disabled={!isFormValid()}
+            >
+              {editingUser ? 'Actualizar Usuario' : 'Crear Usuario'}
             </Button>
           </DialogFooter>
         </DialogContent>
