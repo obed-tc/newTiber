@@ -1,222 +1,170 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
-import { 
-  Plus, 
-  Search, 
-  MoreHorizontal, 
-  Edit, 
-  Trash2, 
-  UserCheck, 
-  UserX,
-  Filter
-} from "lucide-react";
+import { Plus, Search, MoveHorizontal as MoreHorizontal, CreditCard as Edit, Trash2, UserCheck, UserX, Filter, Loader as Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-const mockUsers = [
-  {
-    id: "1",
-    name: "María González",
-    email: "admin@empresaa.com",
-    role: "admin",
-    workspace: "Empresa A - Financiera",
-    clientId: "client_a",
-    status: "active",
-    lastLogin: "2024-01-12",
-    createdAt: "2023-01-15"
-  },
-  {
-    id: "2",
-    name: "Carlos Rodríguez",
-    email: "viewer@empresaa.com",
-    role: "viewer",
-    workspace: "Empresa A - Financiera",
-    clientId: "client_a",
-    status: "active",
-    lastLogin: "2024-01-11",
-    createdAt: "2023-02-10"
-  },
-  {
-    id: "3",
-    name: "Ana Pérez",
-    email: "admin@empresab.com",
-    role: "admin",
-    workspace: "Empresa B - Cooperativa",
-    clientId: "client_b",
-    status: "active",
-    lastLogin: "2024-01-10",
-    createdAt: "2023-03-22"
-  },
-  {
-    id: "4",
-    name: "Luis Martín",
-    email: "viewer@empresab.com",
-    role: "viewer",
-    workspace: "Empresa B - Cooperativa",
-    clientId: "client_b",
-    status: "inactive",
-    lastLogin: "2023-12-15",
-    createdAt: "2023-04-05"
-  }
-];
-
-const mockWorkspaces = [
-  { id: "client_a", name: "Empresa A - Financiera" },
-  { id: "client_b", name: "Empresa B - Cooperativa" },
-  { id: "client_c", name: "Banco Regional S.A." },
-  { id: "client_d", name: "Financiera Capital" }
-];
-
-type User = typeof mockUsers[0];
+import { useUsers, UserRole } from "@/hooks/useUsers";
+import { useWorkspaces } from "@/hooks/useWorkspaces";
 
 export const UsersManager = () => {
-  const [users, setUsers] = useState(mockUsers);
+  const { users, loading: usersLoading, createUser, toggleUserStatus, deleteUser } = useUsers();
+  const { workspaces, loading: workspacesLoading } = useWorkspaces();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedWorkspace, setSelectedWorkspace] = useState<string>("all");
   const [selectedRole, setSelectedRole] = useState<string>("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [newUser, setNewUser] = useState({
-    name: "",
+    full_name: "",
     email: "",
-    role: "viewer",
-    workspaces: [] as string[],
-    workspaceNames: [] as string[]
-  });
-  const { toast } = useToast();
-
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesWorkspace = selectedWorkspace === "all" || user.clientId === selectedWorkspace;
-    const matchesRole = selectedRole === "all" || user.role === selectedRole;
-    
-    return matchesSearch && matchesWorkspace && matchesRole;
+    rol: "Visualizador" as UserRole,
+    workspaceIds: [] as string[]
   });
 
-  const handleCreateUser = () => {
-    if (!newUser.name || !newUser.email || newUser.workspaces.length === 0) {
-      toast({
-        title: "Error",
-        description: "Nombre, email y al menos un workspace son requeridos",
-        variant: "destructive"
-      });
+  const flattenedUsers = useMemo(() => {
+    return users.flatMap(user => {
+      if (user.workspaces.length === 0) {
+        return [{
+          ...user,
+          workspace_name: '-',
+          workspace_id: null,
+          workspace_rol: user.rol
+        }];
+      }
+      return user.workspaces.map(ws => ({
+        ...user,
+        workspace_name: ws.workspace_name,
+        workspace_id: ws.workspace_id,
+        workspace_rol: ws.rol
+      }));
+    });
+  }, [users]);
+
+  const filteredUsers = useMemo(() => {
+    return flattenedUsers.filter(user => {
+      const matchesSearch = user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesWorkspace = selectedWorkspace === "all" || user.workspace_id === selectedWorkspace;
+      const matchesRole = selectedRole === "all" || user.workspace_rol === selectedRole;
+
+      return matchesSearch && matchesWorkspace && matchesRole;
+    });
+  }, [flattenedUsers, searchTerm, selectedWorkspace, selectedRole]);
+
+  const handleCreateUser = async () => {
+    if (!newUser.full_name || !newUser.email || newUser.workspaceIds.length === 0) {
       return;
     }
 
-    // Create one user record for each selected workspace
-    const newUsers: User[] = newUser.workspaces.map(workspaceId => {
-      const workspace = mockWorkspaces.find(w => w.id === workspaceId);
-      return {
-        id: `${Date.now()}-${workspaceId}`,
-        name: newUser.name,
+    try {
+      await createUser({
+        full_name: newUser.full_name,
         email: newUser.email,
-        role: newUser.role as "admin" | "viewer",
-        workspace: workspace?.name || "",
-        clientId: workspaceId,
-        status: "active",
-        lastLogin: "-",
-        createdAt: new Date().toISOString().split('T')[0]
-      };
-    });
+        rol: newUser.rol,
+        workspaceIds: newUser.workspaceIds
+      });
 
-    setUsers([...users, ...newUsers]);
-    setNewUser({ name: "", email: "", role: "viewer", workspaces: [], workspaceNames: [] });
-    setIsCreateDialogOpen(false);
-    
-    toast({
-      title: "Usuario creado",
-      description: `${newUser.name} ha sido asignado a ${newUser.workspaces.length} workspace(s)`
-    });
+      setNewUser({
+        full_name: "",
+        email: "",
+        rol: "Visualizador",
+        workspaceIds: []
+      });
+      setIsCreateDialogOpen(false);
+    } catch (error) {
+      console.error('Error creating user:', error);
+    }
   };
 
-  const handleWorkspaceToggle = (workspaceId: string, workspaceName: string) => {
-    const isSelected = newUser.workspaces.includes(workspaceId);
-    
+  const handleWorkspaceToggle = (workspaceId: string) => {
+    const isSelected = newUser.workspaceIds.includes(workspaceId);
+
     if (isSelected) {
       setNewUser({
         ...newUser,
-        workspaces: newUser.workspaces.filter(id => id !== workspaceId),
-        workspaceNames: newUser.workspaceNames.filter(name => name !== workspaceName)
+        workspaceIds: newUser.workspaceIds.filter(id => id !== workspaceId)
       });
     } else {
       setNewUser({
         ...newUser,
-        workspaces: [...newUser.workspaces, workspaceId],
-        workspaceNames: [...newUser.workspaceNames, workspaceName]
+        workspaceIds: [...newUser.workspaceIds, workspaceId]
       });
     }
   };
 
-  const handleToggleStatus = (user: User) => {
-    const newStatus = user.status === "active" ? "inactive" : "active";
-    setUsers(users.map(u => 
-      u.id === user.id ? { ...u, status: newStatus } : u
-    ));
-    
-    toast({
-      title: `Usuario ${newStatus === "active" ? "activado" : "desactivado"}`,
-      description: `${user.name} ha sido ${newStatus === "active" ? "activado" : "desactivado"}`
-    });
+  const handleToggleStatus = async (userId: string, currentStatus: 'Activo' | 'Inactivo') => {
+    try {
+      await toggleUserStatus(userId, currentStatus);
+    } catch (error) {
+      console.error('Error toggling user status:', error);
+    }
   };
 
-  const handleDeleteUser = (user: User) => {
-    setUsers(users.filter(u => u.id !== user.id));
-    toast({
-      title: "Usuario eliminado",
-      description: `${user.name} ha sido eliminado`
-    });
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await deleteUser(userId);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+    }
   };
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case "admin":
+      case "SuperAdmin":
+        return "destructive";
+      case "Administrador":
         return "default";
-      case "viewer":
+      case "Visualizador":
         return "secondary";
       default:
         return "outline";
     }
   };
 
-  const formatDate = (dateString: string) => {
-    if (dateString === "-") return "-";
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "-";
     return new Date(dateString).toLocaleDateString('es-CO');
   };
+
+  if (usersLoading || workspacesLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -235,7 +183,7 @@ export const UsersManager = () => {
             </Button>
           </div>
         </CardHeader>
-        
+
         <CardContent>
           <div className="flex items-center gap-4 mb-6">
             <div className="relative flex-1">
@@ -247,7 +195,7 @@ export const UsersManager = () => {
                 className="pl-10"
               />
             </div>
-            
+
             <Select value={selectedWorkspace} onValueChange={setSelectedWorkspace}>
               <SelectTrigger className="w-48">
                 <Filter className="h-4 w-4 mr-2" />
@@ -255,22 +203,23 @@ export const UsersManager = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los workspaces</SelectItem>
-                {mockWorkspaces.map((workspace) => (
+                {workspaces.map((workspace) => (
                   <SelectItem key={workspace.id} value={workspace.id}>
                     {workspace.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            
+
             <Select value={selectedRole} onValueChange={setSelectedRole}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-48">
                 <SelectValue placeholder="Rol" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="viewer">Viewer</SelectItem>
+                <SelectItem value="SuperAdmin">SuperAdmin</SelectItem>
+                <SelectItem value="Administrador">Administrador</SelectItem>
+                <SelectItem value="Visualizador">Visualizador</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -288,108 +237,110 @@ export const UsersManager = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{user.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {user.email}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">{user.workspace}</div>
-                    <div className="text-xs text-muted-foreground">
-                      ID: {user.clientId}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getRoleBadgeVariant(user.role)}>
-                      {user.role === "admin" ? "Administrador" : "Visualizador"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.status === "active" ? "default" : "secondary"}>
-                      {user.status === "active" ? "Activo" : "Inactivo"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {formatDate(user.lastLogin)}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {formatDate(user.createdAt)}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => {
-                          setSelectedUser(user);
-                          setIsEditDialogOpen(true);
-                        }}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleToggleStatus(user)}>
-                          {user.status === "active" ? (
-                            <>
-                              <UserX className="mr-2 h-4 w-4" />
-                              Desactivar
-                            </>
-                          ) : (
-                            <>
-                              <UserCheck className="mr-2 h-4 w-4" />
-                              Activar
-                            </>
-                          )}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => handleDeleteUser(user)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+              {filteredUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    No se encontraron usuarios
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredUsers.map((user) => (
+                  <TableRow key={`${user.id}-${user.workspace_id || 'no-workspace'}`}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{user.full_name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {user.email}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">{user.workspace_name}</div>
+                      {user.workspace_id && (
+                        <div className="text-xs text-muted-foreground">
+                          ID: {user.workspace_id.substring(0, 8)}...
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getRoleBadgeVariant(user.workspace_rol)}>
+                        {user.workspace_rol}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={user.estado === "Activo" ? "default" : "secondary"}>
+                        {user.estado}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {formatDate(user.ultimo_acceso)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {formatDate(user.created_at)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleToggleStatus(user.id, user.estado)}>
+                            {user.estado === "Activo" ? (
+                              <>
+                                <UserX className="mr-2 h-4 w-4" />
+                                Desactivar
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck className="mr-2 h-4 w-4" />
+                                Activar
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      {/* Dialog para crear usuario */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Crear Nuevo Usuario</DialogTitle>
             <DialogDescription>
-              Agrega un nuevo usuario a un workspace específico
+              Agrega un nuevo usuario y asígnalo a uno o más workspaces
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name">Nombre completo *</Label>
+              <Label htmlFor="full_name">Nombre completo *</Label>
               <Input
-                id="name"
-                value={newUser.name}
-                onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                id="full_name"
+                value={newUser.full_name}
+                onChange={(e) => setNewUser({...newUser, full_name: e.target.value})}
                 placeholder="Ej: Juan Pérez"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="email">Correo electrónico *</Label>
               <Input
@@ -400,19 +351,19 @@ export const UsersManager = () => {
                 placeholder="Ej: juan@empresa.com"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="workspaces">Workspaces *</Label>
               <div className="space-y-2 border rounded-md p-3 max-h-40 overflow-y-auto">
-                {mockWorkspaces.map((workspace) => (
+                {workspaces.map((workspace) => (
                   <div key={workspace.id} className="flex items-center space-x-2">
                     <Checkbox
                       id={workspace.id}
-                      checked={newUser.workspaces.includes(workspace.id)}
-                      onCheckedChange={() => handleWorkspaceToggle(workspace.id, workspace.name)}
+                      checked={newUser.workspaceIds.includes(workspace.id)}
+                      onCheckedChange={() => handleWorkspaceToggle(workspace.id)}
                     />
-                    <Label 
-                      htmlFor={workspace.id} 
+                    <Label
+                      htmlFor={workspace.id}
                       className="text-sm font-normal cursor-pointer flex-1"
                     >
                       {workspace.name}
@@ -420,30 +371,31 @@ export const UsersManager = () => {
                   </div>
                 ))}
               </div>
-              {newUser.workspaces.length > 0 && (
+              {newUser.workspaceIds.length > 0 && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  {newUser.workspaces.length} workspace(s) seleccionado(s)
+                  {newUser.workspaceIds.length} workspace(s) seleccionado(s)
                 </p>
               )}
             </div>
-            
+
             <div>
-              <Label htmlFor="role">Rol *</Label>
-              <Select 
-                value={newUser.role} 
-                onValueChange={(value) => setNewUser({...newUser, role: value})}
+              <Label htmlFor="rol">Rol *</Label>
+              <Select
+                value={newUser.rol}
+                onValueChange={(value) => setNewUser({...newUser, rol: value as UserRole})}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona un rol" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                  <SelectItem value="viewer">Visualizador</SelectItem>
+                  <SelectItem value="SuperAdmin">SuperAdmin</SelectItem>
+                  <SelectItem value="Administrador">Administrador</SelectItem>
+                  <SelectItem value="Visualizador">Visualizador</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
               Cancelar
