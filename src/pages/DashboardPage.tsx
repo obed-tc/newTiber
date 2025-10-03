@@ -2,11 +2,20 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { DocumentsTable } from "@/components/dashboard/DocumentsTable";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUsers } from "@/hooks/useUsers"; // importa tu hook
 
 export const DashboardPage = () => {
   const { usuario, signOut } = useAuth();
+  const { users, loading } = useUsers();
 
-  if (!usuario) return null;
+  if (!usuario || loading) return null;
+
+  // Obtener los workspaces del usuario actual
+  const userWorkspaces = users.find(u => u.id === usuario.id)?.workspaces.map(w => ({
+    id: w.workspace_id,
+    name: w.workspace_name
+  })) || [];
+
   // Datos simulados de estadísticas
   const mockStats = {
     totalDocuments: 1247,
@@ -19,7 +28,11 @@ export const DashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-background">
-      <DashboardHeader user={usuario} onLogout={signOut} />
+      <DashboardHeader 
+        user={usuario} 
+        workspaces={userWorkspaces}  // ✅ le pasamos los workspaces reales
+        onLogout={signOut} 
+      />
       
       <main className="container mx-auto px-6 py-8 space-y-8">
         {/* Tarjetas de estadísticas */}
@@ -31,6 +44,7 @@ export const DashboardPage = () => {
     </div>
   );
 };
+
 // import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 // import { StatsCards } from "@/components/dashboard/StatsCards";
 // import { DocumentsTable } from "@/components/dashboard/DocumentsTable";

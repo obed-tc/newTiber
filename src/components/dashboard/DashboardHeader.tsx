@@ -14,25 +14,32 @@ import { Shield, LogOut, Settings, User, Building2 } from "lucide-react";
 
 interface DashboardHeaderProps {
   user: {
+    id: string;
     name: string;
     email: string;
     role: "admin" | "viewer";
     workspace: string;
   };
+  workspaces: {
+    id: string;
+    name: string;
+  }[];
   onLogout: () => void;
   onWorkspaceChange?: (workspace: string) => void;
 }
 
-export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: DashboardHeaderProps) => {
+
+export const DashboardHeader = ({ user, workspaces, onLogout, onWorkspaceChange }: DashboardHeaderProps) => {
+  const availableWorkspaces = workspaces; // ahora vienen de la DB
 
   // Workspaces disponibles (esto vendría de una API en implementación real)
-  const availableWorkspaces = [
-    "TiverDocs Platform",
-    "Empresa A - Documentos",
-    "Empresa B - Títulos Valor",
-    "Cooperativa Rural",
-    "Banco Central"
-  ];
+  // const availableWorkspaces = [
+  //   "TiverDocs Platform",
+  //   "Empresa A - Documentos",
+  //   "Empresa B - Títulos Valor",
+  //   "Cooperativa Rural",
+  //   "Banco Central"
+  // ];
 
   const getRoleColor = (role: string) => {
     return role === "admin" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground";
@@ -78,6 +85,28 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
                     </div>
                     {availableWorkspaces.map((workspace) => (
                       <SelectItem
+                        key={workspace.id}
+                        value={workspace.name}
+                        className="cursor-pointer focus:bg-primary/10 focus:text-primary py-3 px-3 rounded-md m-1"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full ${workspace.name === user.workspace ? 'bg-primary' : 'bg-muted-foreground/30'}`}></div>
+                          <Building2 className="w-4 h-4" />
+                          <span className="font-medium">{workspace.name}</span>
+                          {workspace.name === user.workspace && (
+                            <Badge variant="secondary" className="ml-auto text-xs">Activo</Badge>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+
+                  {/* <SelectContent className="bg-background border border-border shadow-xl min-w-[280px] z-50">
+                    <div className="p-2 border-b border-border/50">
+                      <span className="text-xs font-medium text-muted-foreground">Workspaces Disponibles</span>
+                    </div>
+                    {availableWorkspaces.map((workspace) => (
+                      <SelectItem
                         key={workspace}
                         value={workspace}
                         className="cursor-pointer focus:bg-primary/10 focus:text-primary py-3 px-3 rounded-md m-1"
@@ -92,7 +121,7 @@ export const DashboardHeader = ({ user, onLogout, onWorkspaceChange }: Dashboard
                         </div>
                       </SelectItem>
                     ))}
-                  </SelectContent>
+                  </SelectContent> */}
                 </Select>
               </div>
             </div>
