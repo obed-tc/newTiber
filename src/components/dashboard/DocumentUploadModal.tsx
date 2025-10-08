@@ -23,41 +23,42 @@ interface DocumentUploadModalProps {
 export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = false }: DocumentUploadModalProps) => {
   const { toast } = useToast();
   const { getAttributesForDocumentType } = useCustomAttributes();
-  
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState<string>("");
   const [basicAttributeValues, setBasicAttributeValues] = useState<Record<string, string | number>>({});
   const [customAttributeValues, setCustomAttributeValues] = useState<Record<string, string | number>>({});
-  
+
   const documentTypes = ["Pagaré", "Solicitud de crédito", "Consentimiento informado"];
-  
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
     }
   };
-  
+
   const handleDocumentTypeChange = (type: string) => {
     setDocumentType(type);
     setBasicAttributeValues({}); // Reset basic attribute values when document type changes
     setCustomAttributeValues({}); // Reset custom attribute values when document type changes
   };
-  
+
   const handleBasicAttributeChange = (fieldName: string, value: string | number) => {
     setBasicAttributeValues(prev => ({
       ...prev,
       [fieldName]: value
     }));
   };
-  
+
   const handleCustomAttributeChange = (attributeId: string, value: string | number) => {
+    console.log("Atributo ", attributeId)
     setCustomAttributeValues(prev => ({
       ...prev,
       [attributeId]: value
     }));
   };
-  
+
   const handleUpload = () => {
     if (!selectedFile) {
       toast({
@@ -100,16 +101,16 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = f
     setBasicAttributeValues({});
     setCustomAttributeValues({});
   };
-  
+
   // Get available filters for the selected document type
   const availableBasicFields = documentType ? getFilterConfigsByDocumentType(documentType) : [];
   const customAttributes = documentType ? getAttributesForDocumentType(documentType) : [];
-  
+
   // Separate basic fields (excluding common fields that are auto-generated)
-  const basicFields = availableBasicFields.filter(field => 
+  const basicFields = availableBasicFields.filter(field =>
     !['empresa', 'proceso', 'subproceso', 'fechaIngreso', 'id'].includes(field.field)
   );
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh]">
@@ -119,7 +120,7 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = f
             Subir Documento
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6 max-h-[60vh] overflow-y-auto">
           {/* File Upload */}
           <Card className="border-dashed border-2 border-primary/30 hover:border-primary/50 transition-colors">
@@ -161,7 +162,7 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = f
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Document Type Selection */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Tipo de Documento</Label>
@@ -176,7 +177,7 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = f
               </SelectContent>
             </Select>
           </div>
-          
+
           {/* Document Attributes */}
           {(basicFields.length > 0 || customAttributes.length > 0) && (
             <Tabs defaultValue="basic" className="w-full">
@@ -184,7 +185,7 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = f
                 <TabsTrigger value="basic">Campos Básicos</TabsTrigger>
                 <TabsTrigger value="custom">Campos Personalizados</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="basic" className="mt-4">
                 {basicFields.length > 0 ? (
                   <Card>
@@ -200,7 +201,7 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = f
                           <Label className="text-sm font-medium">
                             {field.label}
                           </Label>
-                          
+
                           {field.type === "text" && (
                             <Input
                               placeholder={`Ingresa ${field.label.toLowerCase()}`}
@@ -208,7 +209,7 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = f
                               onChange={(e) => handleBasicAttributeChange(field.field, e.target.value)}
                             />
                           )}
-                          
+
                           {field.type === "number" && (
                             <Input
                               type="number"
@@ -217,7 +218,7 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = f
                               onChange={(e) => handleBasicAttributeChange(field.field, parseFloat(e.target.value) || 0)}
                             />
                           )}
-                          
+
                           {field.type === "date" && (
                             <Input
                               type="date"
@@ -225,10 +226,10 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = f
                               onChange={(e) => handleBasicAttributeChange(field.field, e.target.value)}
                             />
                           )}
-                          
+
                           {field.type === "select" && field.options && (
-                            <Select 
-                              value={basicAttributeValues[field.field]?.toString() || ""} 
+                            <Select
+                              value={basicAttributeValues[field.field]?.toString() || ""}
                               onValueChange={(value) => handleBasicAttributeChange(field.field, value)}
                             >
                               <SelectTrigger>
@@ -251,7 +252,7 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = f
                   </div>
                 )}
               </TabsContent>
-              
+
               <TabsContent value="custom" className="mt-4">
                 {customAttributes.length > 0 ? (
                   <Card>
@@ -268,7 +269,7 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = f
                             {attribute.label}
                             {attribute.required && <span className="text-destructive ml-1">*</span>}
                           </Label>
-                          
+
                           {attribute.type === "text" && (
                             <Input
                               placeholder={`Ingresa ${attribute.label.toLowerCase()}`}
@@ -276,7 +277,7 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = f
                               onChange={(e) => handleCustomAttributeChange(attribute.id, e.target.value)}
                             />
                           )}
-                          
+
                           {attribute.type === "number" && (
                             <Input
                               type="number"
@@ -285,7 +286,7 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = f
                               onChange={(e) => handleCustomAttributeChange(attribute.id, parseFloat(e.target.value) || 0)}
                             />
                           )}
-                          
+
                           {attribute.type === "date" && (
                             <Input
                               type="date"
@@ -293,10 +294,10 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = f
                               onChange={(e) => handleCustomAttributeChange(attribute.id, e.target.value)}
                             />
                           )}
-                          
+
                           {attribute.type === "select" && attribute.options && (
-                            <Select 
-                              value={customAttributeValues[attribute.id]?.toString() || ""} 
+                            <Select
+                              value={customAttributeValues[attribute.id]?.toString() || ""}
                               onValueChange={(value) => handleCustomAttributeChange(attribute.id, value)}
                             >
                               <SelectTrigger>
@@ -321,14 +322,14 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = f
               </TabsContent>
             </Tabs>
           )}
-          
+
           {documentType && basicFields.length === 0 && customAttributes.length === 0 && (
             <div className="text-center text-muted-foreground text-sm py-8">
               No hay atributos configurados para este tipo de documento.
             </div>
           )}
         </div>
-        
+
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isUploading}>
             Cancelar
