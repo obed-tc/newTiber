@@ -6,18 +6,21 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, FileText, X, Plus, Building, User } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Upload, FileText, X, Plus, Building, User, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomAttributes, DocumentAttributeValue } from "@/hooks/useCustomAttributes";
 import { getFilterConfigsByDocumentType } from "./filters/dynamicFilterConfigs";
+import { DocumentData } from "@/services/documentService";
 
 interface DocumentUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpload: (file: File, attributes: DocumentAttributeValue[], documentType: string) => void;
+  onUpload: (file: File, documentData: Partial<DocumentData>, customAttributes: Array<{ atributo_id: string; valor: string }>) => void;
+  isUploading?: boolean;
 }
 
-export const DocumentUploadModal = ({ isOpen, onClose, onUpload }: DocumentUploadModalProps) => {
+export const DocumentUploadModal = ({ isOpen, onClose, onUpload, isUploading = false }: DocumentUploadModalProps) => {
   const { toast } = useToast();
   const { getAttributesForDocumentType } = useCustomAttributes();
   
@@ -64,7 +67,7 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload }: DocumentUploa
       });
       return;
     }
-    
+
     if (!documentType) {
       toast({
         title: "Error",
@@ -73,35 +76,29 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload }: DocumentUploa
       });
       return;
     }
-    
-    // Combine all attribute values into a single array
-    const allAttributes: DocumentAttributeValue[] = [
-      // Basic document attributes
-      ...Object.entries(basicAttributeValues).map(([field, value]) => ({
-        attributeId: `basic_${field}`,
-        value
-      })),
-      // Custom attributes
-      ...Object.entries(customAttributeValues).map(([attributeId, value]) => ({
-        attributeId,
-        value
-      }))
-    ];
-    
-    onUpload(selectedFile, allAttributes, documentType);
-    
-    // Reset form
+
+    const documentData: Partial<DocumentData> = {
+      tipo_documento: documentType,
+      estado: 'Activo',
+      ...Object.fromEntries(
+        Object.entries(basicAttributeValues).map(([field, value]) => {
+          const snakeField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
+          return [snakeField, value];
+        })
+      )
+    };
+
+    const customAttrs = Object.entries(customAttributeValues).map(([attributeId, value]) => ({
+      atributo_id: attributeId,
+      valor: String(value)
+    }));
+
+    onUpload(selectedFile, documentData, customAttrs);
+
     setSelectedFile(null);
     setDocumentType("");
     setBasicAttributeValues({});
     setCustomAttributeValues({});
-    
-    toast({
-      title: "Documento subido",
-      description: "El documento se ha subido correctamente con sus atributos.",
-    });
-    
-    onClose();
   };
   
   // Get available filters for the selected document type
@@ -333,15 +330,22 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUpload }: DocumentUploa
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isUploading}>
             Cancelar
           </Button>
-          <Button 
-            onClick={handleUpload} 
-            disabled={!selectedFile || !documentType}
+          <Button
+            onClick={handleUpload}
+            disabled={!selectedFile || !documentType || isUploading}
             className="bg-gradient-primary hover:opacity-90"
           >
-            Subir Documento
+            {isUploading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Subiendo...
+              </>
+            ) : (
+              'Subir Documento'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

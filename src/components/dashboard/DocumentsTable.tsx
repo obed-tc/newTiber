@@ -4,13 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import {
   Dialog,
@@ -19,236 +19,51 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { 
-  Download, 
-  Search, 
-  Filter, 
-  Calendar,
+import {
+  Download,
+  Search,
+  Filter,
   AlertTriangle,
   CheckCircle,
   Clock,
   FileText,
   Settings,
-  FilterX,
   Upload,
-  Eye
+  Eye,
+  Loader2,
+  Trash2
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { AdvancedFiltersModal } from "./filters/AdvancedFiltersModal";
 import { ActiveFilters } from "./filters/ActiveFilters";
-import { documentFilterConfigs } from "./filters/filterConfigs";
-import { getFilterConfigsByDocumentType, getFilterCategoriesByDocumentType } from "./filters/dynamicFilterConfigs";
+import { getFilterConfigsByDocumentType } from "./filters/dynamicFilterConfigs";
 import { FilterValue } from "./filters/types";
 import { DocumentUploadModal } from "./DocumentUploadModal";
 import { useCustomAttributes } from "@/hooks/useCustomAttributes";
 import { AttributeManager } from "@/components/admin/AttributeManager";
 import { CustomAttribute } from "@/hooks/useCustomAttributes";
-
-interface Document {
-  id: string;
-  nombreDeudor: string;
-  nombreCodeudor: string;
-  idDeudor: string;
-  idCodeudor: string;
-  fechaVencimiento: Date;
-  valorTitulo: number;
-  fechaIngreso: Date;
-  proceso: string;
-  subproceso: string;
-  // Extended metadata fields
-  tipoDocumento: string;
-  nombreDelTitulo: string;
-  fechaFirmaTitle: Date;
-  fechaCaducidad: Date;
-  fechaConstruccion: Date;
-  tasaInteres: number;
-  plazoCredito: number;
-  ciudadExpedicion: string;
-  moneda: string;
-  lugarPago: string;
-  telefono: string;
-  email: string;
-  direccion: string;
-  ciudad: string;
-  departamento: string;
-  tipoPersona: "Natural" | "Jurídica";
-  genero?: "Masculino" | "Femenino";
-  estadoCivil?: string;
-  nivelEducativo?: string;
-  ocupacion: string;
-  actividadEconomica: string;
-  ingresosMensuales: number;
-  patrimonio: number;
-  experienciaCrediticia: string;
-  scoring: number;
-  garantia: string;
-  valorGarantia: number;
-  observaciones: string;
-  estado: "Activo" | "Inactivo" | "Vencido";
-  etapaCobranza: string;
-  diasMora: number;
-  valorMora: number;
-  gestorAsignado: string;
-  fechaUltimaGestion: Date;
-  resultadoUltimaGestion: string;
-  proximaAccion: string;
-  fechaProximaAccion: Date;
-}
-
-const mockDocuments: Document[] = [
-  {
-    id: "PAG-2024-001",
-    nombreDeudor: "Juan Carlos Pérez",
-    nombreCodeudor: "María González",
-    idDeudor: "1234567890",
-    idCodeudor: "0987654321",
-    fechaVencimiento: new Date("2024-03-15"),
-    valorTitulo: 15000000,
-    fechaIngreso: new Date("2024-01-15"),
-    proceso: "Crédito Personal",
-    subproceso: "Aprobación",
-    tipoDocumento: "Pagaré",
-    nombreDelTitulo: "Pagaré de Crédito Personal",
-    fechaFirmaTitle: new Date("2024-01-10"),
-    fechaCaducidad: new Date("2025-03-15"),
-    fechaConstruccion: new Date("2024-01-15"),
-    tasaInteres: 18.5,
-    plazoCredito: 12,
-    ciudadExpedicion: "Bogotá",
-    moneda: "COP",
-    lugarPago: "Banco Central",
-    telefono: "3001234567",
-    email: "juan.perez@email.com",
-    direccion: "Calle 123 #45-67",
-    ciudad: "Bogotá",
-    departamento: "Cundinamarca",
-    tipoPersona: "Natural",
-    genero: "Masculino",
-    estadoCivil: "Casado",
-    nivelEducativo: "Universitario",
-    ocupacion: "Ingeniero",
-    actividadEconomica: "Servicios profesionales",
-    ingresosMensuales: 5000000,
-    patrimonio: 150000000,
-    experienciaCrediticia: "Buena",
-    scoring: 750,
-    garantia: "Hipotecaria",
-    valorGarantia: 200000000,
-    observaciones: "Cliente con buen historial",
-    estado: "Activo",
-    etapaCobranza: "Preventiva",
-    diasMora: 0,
-    valorMora: 0,
-    gestorAsignado: "Ana García",
-    fechaUltimaGestion: new Date("2024-01-20"),
-    resultadoUltimaGestion: "Contacto exitoso",
-    proximaAccion: "Seguimiento",
-    fechaProximaAccion: new Date("2024-02-20")
-  },
-  {
-    id: "PAG-2024-002",
-    nombreDeudor: "Ana Sofía Rodríguez",
-    nombreCodeudor: "Carlos Mendez",
-    idDeudor: "2345678901",
-    idCodeudor: "1098765432",
-    fechaVencimiento: new Date("2024-12-20"),
-    valorTitulo: 25000000,
-    fechaIngreso: new Date("2024-01-20"),
-    proceso: "Crédito Empresarial",
-    subproceso: "Desembolso",
-    tipoDocumento: "Solicitud de Crédito",
-    nombreDelTitulo: "Solicitud Crédito Empresarial",
-    fechaFirmaTitle: new Date("2024-01-18"),
-    fechaCaducidad: new Date("2025-12-20"),
-    fechaConstruccion: new Date("2024-01-20"),
-    tasaInteres: 16.2,
-    plazoCredito: 24,
-    ciudadExpedicion: "Medellín",
-    moneda: "COP",
-    lugarPago: "Sucursal Medellín",
-    telefono: "3009876543",
-    email: "ana.rodriguez@empresa.com",
-    direccion: "Carrera 70 #80-90",
-    ciudad: "Medellín",
-    departamento: "Antioquia",
-    tipoPersona: "Jurídica",
-    ocupacion: "Empresaria",
-    actividadEconomica: "Comercio",
-    ingresosMensuales: 12000000,
-    patrimonio: 350000000,
-    experienciaCrediticia: "Buena",
-    scoring: 820,
-    garantia: "Fiduciaria",
-    valorGarantia: 400000000,
-    observaciones: "Empresa con sólido respaldo",
-    estado: "Activo",
-    etapaCobranza: "Preventiva",
-    diasMora: 0,
-    valorMora: 0,
-    gestorAsignado: "Carlos López",
-    fechaUltimaGestion: new Date("2024-01-25"),
-    resultadoUltimaGestion: "Documentos en orden",
-    proximaAccion: "Desembolso",
-    fechaProximaAccion: new Date("2024-02-01")
-  },
-  {
-    id: "PAG-2024-003",
-    nombreDeudor: "Roberto Silva",
-    nombreCodeudor: "Elena Castro",
-    idDeudor: "3456789012",
-    idCodeudor: "2109876543",
-    fechaVencimiento: new Date("2024-02-10"),
-    valorTitulo: 8500000,
-    fechaIngreso: new Date("2024-01-25"),
-    proceso: "Microcrédito",
-    subproceso: "Renovación",
-    tipoDocumento: "Consentimiento Informado",
-    nombreDelTitulo: "Microcrédito Rural",
-    fechaFirmaTitle: new Date("2024-01-23"),
-    fechaCaducidad: new Date("2024-08-10"),
-    fechaConstruccion: new Date("2024-01-25"),
-    tasaInteres: 22.8,
-    plazoCredito: 6,
-    ciudadExpedicion: "Cali",
-    moneda: "COP",
-    lugarPago: "Cooperativa Rural",
-    telefono: "3205555555",
-    email: "roberto.silva@rural.com",
-    direccion: "Vereda El Progreso",
-    ciudad: "Cali",
-    departamento: "Valle del Cauca",
-    tipoPersona: "Natural",
-    genero: "Masculino",
-    estadoCivil: "Unión Libre",
-    nivelEducativo: "Secundaria",
-    ocupacion: "Agricultor",
-    actividadEconomica: "Agricultura",
-    ingresosMensuales: 2500000,
-    patrimonio: 45000000,
-    experienciaCrediticia: "Regular",
-    scoring: 650,
-    garantia: "Codeudor",
-    valorGarantia: 15000000,
-    observaciones: "Renovación de microcrédito",
-    estado: "Vencido",
-    etapaCobranza: "Administrativa",
-    diasMora: 15,
-    valorMora: 450000,
-    gestorAsignado: "María Fernández",
-    fechaUltimaGestion: new Date("2024-02-08"),
-    resultadoUltimaGestion: "Sin contacto",
-    proximaAccion: "Llamada telefónica",
-    fechaProximaAccion: new Date("2024-02-12")
-  }
-];
+import { useDocuments, DocumentWithAttributes } from "@/hooks/useDocuments";
+import { useAuth } from "@/contexts/AuthContext";
+import { DocumentData } from "@/services/documentService";
 
 interface DocumentsTableProps {
   userRole?: "admin" | "viewer";
+  workspaceId?: string;
 }
 
-export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
-  const [documents] = useState(mockDocuments);
+export const DocumentsTable = ({ userRole = "admin", workspaceId }: DocumentsTableProps) => {
+  const { usuario } = useAuth();
+  const {
+    documents,
+    isLoading,
+    uploadDocument,
+    isUploading,
+    downloadDocument,
+    deleteDocument,
+    isDeleting
+  } = useDocuments(workspaceId);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [documentTypeFilter, setDocumentTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -257,11 +72,10 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isAttributeManagerOpen, setIsAttributeManagerOpen] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
-  
+  const [selectedDocument, setSelectedDocument] = useState<DocumentWithAttributes | null>(null);
+
   const { attributes, saveDocumentAttributes, getDocumentAttributes } = useCustomAttributes();
-  
-  // Mapear el tipo de documento seleccionado para usar en filtros dinámicos
+
   const getSelectedDocumentTypeForFilters = () => {
     switch (documentTypeFilter) {
       case "Pagaré": return "Pagaré";
@@ -274,11 +88,14 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
   const selectedDocumentTypeForFilters = getSelectedDocumentTypeForFilters();
   const dynamicFilterConfigs = getFilterConfigsByDocumentType(selectedDocumentTypeForFilters);
 
-  const getDocumentStatus = (fechaVencimiento: Date) => {
+  const getDocumentStatus = (fechaVencimiento?: string) => {
+    if (!fechaVencimiento) return "vigente";
+
     const today = new Date();
-    const diffTime = fechaVencimiento.getTime() - today.getTime();
+    const vencimiento = new Date(fechaVencimiento);
+    const diffTime = vencimiento.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) return "vencido";
     if (diffDays <= 30) return "por-vencer";
     return "vigente";
@@ -311,7 +128,8 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
     }
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount?: number) => {
+    if (!amount) return "$0";
     return new Intl.NumberFormat("es-CO", {
       style: "currency",
       currency: "COP",
@@ -320,81 +138,71 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
     }).format(amount).replace(/\./g, ',').replace(/,([^,]*)$/, '.$1').replace(/,/g, '.');
   };
 
-  const applyAdvancedFilters = (document: Document) => {
+  const applyAdvancedFilters = (document: DocumentWithAttributes) => {
     return advancedFilters.every(filter => {
       let fieldValue: any;
-      
-      // Handle custom attributes
+
       if (filter.field.startsWith('custom_')) {
         const customAttrName = filter.field.replace('custom_', '');
-        const docAttributes = getDocumentAttributes(document.id);
-        const customValue = docAttributes.find(attr => {
-          const customAttr = attributes.find(a => a.id === attr.attributeId);
-          return customAttr?.name === customAttrName;
-        });
-        fieldValue = customValue?.value;
+        const customValue = document.valores_atributos?.find(attr =>
+          attr.atributos_personalizados.nombre === customAttrName
+        );
+        fieldValue = customValue?.valor;
       } else {
-        // Handle standard document fields
-        fieldValue = document[filter.field as keyof Document];
+        fieldValue = document[filter.field as keyof DocumentWithAttributes];
       }
-      
+
       if (fieldValue === undefined || fieldValue === null) return false;
-      
+
       switch (filter.operator) {
         case "contains":
-          // Case-insensitive text search
           return fieldValue.toString().toLowerCase().includes(filter.value.toString().toLowerCase());
-        
+
         case "equals":
           if (typeof fieldValue === 'number' && typeof filter.value === 'number') {
             return fieldValue === filter.value;
           }
-          // Case-insensitive text comparison
           return fieldValue.toString().toLowerCase() === filter.value.toString().toLowerCase();
-        
+
         case "greaterThan":
           return Number(fieldValue) > Number(filter.value);
-        
+
         case "lessThan":
           return Number(fieldValue) < Number(filter.value);
-        
+
         case "between":
-          // Handle date ranges
           if (filter.field.includes("fecha") || filter.field.includes("Fecha")) {
             const [fromDate, toDate] = filter.value.toString().split('|');
             if (!fromDate || !toDate) return true;
-            
+
             const docDate = new Date(fieldValue.toString());
             const from = new Date(fromDate);
             const to = new Date(toDate);
-            
-            // Include start and end dates (inclusive range)
+
             return docDate >= from && docDate <= to;
           }
-          // Handle number ranges
           else if (typeof fieldValue === 'number') {
             const [minValue, maxValue] = filter.value.toString().split('|');
             if (!minValue || !maxValue) return true;
-            
+
             const numValue = Number(fieldValue);
             const min = Number(minValue);
             const max = Number(maxValue);
-            
-            // Include min and max values (inclusive range)
+
             return numValue >= min && numValue <= max;
           }
           return true;
-        
+
         case "before":
           const docDateBefore = new Date(fieldValue.toString());
           const beforeDate = new Date(filter.value.toString());
           return docDateBefore < beforeDate;
-        
+
         case "after":
           const docDateAfter = new Date(fieldValue.toString());
           const afterDate = new Date(filter.value.toString());
           return docDateAfter > afterDate;
-        
+
         default:
           return true;
       }
@@ -402,27 +210,26 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
   };
 
   const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = 
-      doc.nombreDeudor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.idDeudor.includes(searchTerm) ||
+    const matchesSearch =
+      doc.nombre_deudor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.id_deudor?.includes(searchTerm) ||
       doc.id.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesDocumentType = documentTypeFilter === "all" || doc.tipoDocumento === documentTypeFilter;
-    
-    const status = getDocumentStatus(doc.fechaVencimiento);
+
+    const matchesDocumentType = documentTypeFilter === "all" || doc.tipo_documento === documentTypeFilter;
+
+    const status = getDocumentStatus(doc.fecha_vencimiento);
     const matchesStatus = statusFilter === "all" || status === statusFilter;
-    
+
     const matchesAdvancedFilters = applyAdvancedFilters(doc);
-    
+
     return matchesSearch && matchesDocumentType && matchesStatus && matchesAdvancedFilters;
   });
 
-  const handleDownload = (documentId: string) => {
-    // Simular descarga
-    console.log("Descargando documento:", documentId);
+  const handleDownload = async (document: DocumentWithAttributes) => {
+    await downloadDocument(document.file_path, document.file_name);
   };
 
-  const handleViewDetails = (document: Document) => {
+  const handleViewDetails = (document: DocumentWithAttributes) => {
     setSelectedDocument(document);
     setShowDetailsModal(true);
   };
@@ -431,82 +238,40 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
     setShowUploadModal(true);
   };
 
-  const handleDocumentUpload = (file: File, documentAttributes: any[], documentType: string) => {
-    // Generate a unique document ID
-    const documentId = `DOC-${Date.now()}`;
-    
-    // Save the document attributes
-    saveDocumentAttributes(documentId, documentAttributes);
-    
-    // Create a new mock document with basic info (in real app, this would come from backend)
-    const newDocument: Document = {
-      id: documentId,
-      nombreDeudor: "Documento Cargado",
-      nombreCodeudor: "",
-      idDeudor: "ID-" + Date.now(),
-      idCodeudor: "",
-      fechaVencimiento: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
-      valorTitulo: 0,
-      fechaIngreso: new Date(),
-      proceso: "Nuevo",
-      subproceso: "Carga",
-      tipoDocumento: documentType,
-      nombreDelTitulo: file.name,
-      fechaFirmaTitle: new Date(),
-      fechaCaducidad: new Date(),
-      fechaConstruccion: new Date(),
-      tasaInteres: 0,
-      plazoCredito: 0,
-      ciudadExpedicion: "",
-      moneda: "COP",
-      lugarPago: "",
-      telefono: "",
-      email: "",
-      direccion: "",
-      ciudad: "",
-      departamento: "",
-      tipoPersona: "Natural",
-      ocupacion: "",
-      actividadEconomica: "",
-      ingresosMensuales: 0,
-      patrimonio: 0,
-      experienciaCrediticia: "",
-      scoring: 0,
-      garantia: "",
-      valorGarantia: 0,
-      observaciones: `Documento cargado: ${file.name}`,
-      estado: "Activo",
-      etapaCobranza: "",
-      diasMora: 0,
-      valorMora: 0,
-      gestorAsignado: "",
-      fechaUltimaGestion: new Date(),
-      resultadoUltimaGestion: "",
-      proximaAccion: "",
-      fechaProximaAccion: new Date()
-    };
-    
-    // Here you would implement the actual file upload logic and backend integration
-    console.log("Uploading document:", {
-      id: documentId,
-      file: file.name,
-      type: documentType,
-      attributes: documentAttributes,
-      document: newDocument
+  const handleDocumentUpload = (file: File, documentData: Partial<DocumentData>, customAttributes: Array<{ atributo_id: string; valor: string }>) => {
+    if (!workspaceId || !usuario) return;
+
+    uploadDocument({
+      file,
+      workspaceId,
+      userId: usuario.id,
+      documentData,
+      customAttributes
     });
-    
-    // Close modal after successful upload
+
     setShowUploadModal(false);
   };
 
   const handleSaveAttributes = (attributes: CustomAttribute[]) => {
-    // Attributes are already saved in AttributeManager through useCustomAttributes hook
     console.log("Attributes updated successfully:", attributes);
   };
 
+  const handleDelete = (document: DocumentWithAttributes) => {
+    if (confirm('¿Estás seguro de eliminar este documento?')) {
+      deleteDocument({ documentId: document.id, filePath: document.file_path });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Filtros */}
       <Card className="shadow-card border-0 bg-gradient-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -525,7 +290,7 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
                 className="pl-10 bg-background/50"
               />
             </div>
-            
+
             <Select value={documentTypeFilter} onValueChange={setDocumentTypeFilter}>
               <SelectTrigger className="bg-background/50">
                 <SelectValue placeholder="Tipo de documento" />
@@ -537,7 +302,7 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
                 <SelectItem value="Consentimiento Informado">Consentimiento informado</SelectItem>
               </SelectContent>
             </Select>
-            
+
             {documentTypeFilter === "Pagaré" && (
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="bg-background/50">
@@ -551,17 +316,17 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
                 </SelectContent>
               </Select>
             )}
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               onClick={() => setShowAdvancedFilters(true)}
               className="bg-background/50 relative"
             >
               <Settings className="w-4 h-4 mr-2" />
               Filtros Avanzados
               {advancedFilters.length > 0 && (
-                <Badge 
-                  variant="destructive" 
+                <Badge
+                  variant="destructive"
                   className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs"
                 >
                   {advancedFilters.length}
@@ -569,7 +334,6 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
               )}
             </Button>
 
-            {/* Botón para gestionar atributos (solo admin) */}
             {userRole === "admin" && (
               <Button
                 variant="outline"
@@ -584,7 +348,6 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
         </CardContent>
       </Card>
 
-      {/* Active Filters */}
       <ActiveFilters
         filters={advancedFilters}
         onRemoveFilter={(index) => {
@@ -595,7 +358,6 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
         onClearAll={() => setAdvancedFilters([])}
       />
 
-      {/* Advanced Filters Modal */}
       <AdvancedFiltersModal
         isOpen={showAdvancedFilters}
         onClose={() => setShowAdvancedFilters(false)}
@@ -606,17 +368,27 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
         customAttributes={attributes}
       />
 
-      {/* Tabla de documentos */}
       <Card className="shadow-card border-0 bg-gradient-card">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>
               Documentos ({filteredDocuments.length})
             </CardTitle>
-            <Button onClick={handleUpload} className="bg-gradient-primary">
-              <Upload className="w-4 h-4 mr-2" />
-              Cargar documento
-            </Button>
+            {userRole === "admin" && (
+              <Button onClick={handleUpload} className="bg-gradient-primary" disabled={isUploading}>
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Subiendo...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Cargar documento
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -625,113 +397,115 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
               <TableHeader>
                 <TableRow className="bg-muted/30">
                   <TableHead>ID Documento</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Deudor</TableHead>
-                  <TableHead>Codeudor</TableHead>
                   <TableHead>Valor (COP)</TableHead>
                   <TableHead>Vencimiento</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead>Proceso</TableHead>
                   <TableHead className="text-center">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredDocuments.map((doc) => {
-                  const status = getDocumentStatus(doc.fechaVencimiento);
-                  return (
-                    <TableRow key={doc.id} className="hover:bg-muted/20 transition-colors">
-                      <TableCell className="font-medium">{doc.id}</TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{doc.nombreDeudor}</div>
-                          <div className="text-sm text-muted-foreground">{doc.idDeudor}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{doc.nombreCodeudor}</div>
-                          <div className="text-sm text-muted-foreground">{doc.idCodeudor}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-mono">
-                        {formatCurrency(doc.valorTitulo)}
-                      </TableCell>
-                      <TableCell>
-                        {format(doc.fechaVencimiento, "dd MMM yyyy", { locale: es })}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={`${getStatusColor(status)} flex items-center gap-1 w-fit`}>
-                          {getStatusIcon(status)}
-                          {getStatusLabel(status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{doc.proceso}</div>
-                          <div className="text-sm text-muted-foreground">{doc.subproceso}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewDetails(doc)}
-                            className="bg-background/50 hover:bg-primary hover:text-primary-foreground"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          {userRole === "admin" && (
+                {filteredDocuments.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      No hay documentos para mostrar
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredDocuments.map((doc) => {
+                    const status = getDocumentStatus(doc.fecha_vencimiento);
+                    return (
+                      <TableRow key={doc.id} className="hover:bg-muted/20 transition-colors">
+                        <TableCell className="font-medium">{doc.id.substring(0, 8)}...</TableCell>
+                        <TableCell>{doc.tipo_documento}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{doc.nombre_deudor || 'Sin nombre'}</div>
+                            <div className="text-sm text-muted-foreground">{doc.id_deudor || 'Sin ID'}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-mono">
+                          {formatCurrency(doc.valor_titulo)}
+                        </TableCell>
+                        <TableCell>
+                          {doc.fecha_vencimiento ? format(new Date(doc.fecha_vencimiento), "dd MMM yyyy", { locale: es }) : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={`${getStatusColor(status)} flex items-center gap-1 w-fit`}>
+                            {getStatusIcon(status)}
+                            {getStatusLabel(status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-2">
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleDownload(doc.id)}
+                              onClick={() => handleViewDetails(doc)}
+                              className="bg-background/50 hover:bg-primary hover:text-primary-foreground"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDownload(doc)}
                               className="bg-background/50 hover:bg-primary hover:text-primary-foreground"
                             >
                               <Download className="w-4 h-4" />
                             </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                            {userRole === "admin" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDelete(doc)}
+                                className="bg-background/50 hover:bg-destructive hover:text-destructive-foreground"
+                                disabled={isDeleting}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </div>
         </CardContent>
       </Card>
 
-      {/* Document Upload Modal */}
       {userRole === "admin" && (
         <DocumentUploadModal
           isOpen={showUploadModal}
           onClose={() => setShowUploadModal(false)}
           onUpload={handleDocumentUpload}
+          isUploading={isUploading}
         />
       )}
 
-      {/* Attribute Manager Modal */}
       {userRole === "admin" && (
-        <AttributeManager 
+        <AttributeManager
           isOpen={isAttributeManagerOpen}
           onClose={() => setIsAttributeManagerOpen(false)}
           onSave={handleSaveAttributes}
         />
       )}
 
-      {/* Document Details Modal */}
       <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalles del Documento</DialogTitle>
             <DialogDescription>
               Información detallada del documento seleccionado
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedDocument && (
             <div className="space-y-6">
-              {/* Datos básicos */}
               <div>
                 <h3 className="text-lg font-semibold mb-3">Datos Básicos</h3>
                 <div className="grid grid-cols-2 gap-4">
@@ -741,74 +515,73 @@ export const DocumentsTable = ({ userRole = "admin" }: DocumentsTableProps) => {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Tipo de Documento</label>
-                    <p className="font-medium">{selectedDocument.tipoDocumento}</p>
+                    <p className="font-medium">{selectedDocument.tipo_documento}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Nombre del Título</label>
-                    <p className="font-medium">{selectedDocument.nombreDelTitulo}</p>
+                    <label className="text-sm font-medium text-muted-foreground">Nombre del Archivo</label>
+                    <p className="font-medium">{selectedDocument.file_name}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Proceso</label>
-                    <p className="font-medium">{selectedDocument.proceso}</p>
+                    <label className="text-sm font-medium text-muted-foreground">Tamaño</label>
+                    <p className="font-medium">{(selectedDocument.file_size / 1024 / 1024).toFixed(2)} MB</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Subproceso</label>
-                    <p className="font-medium">{selectedDocument.subproceso}</p>
+                    <label className="text-sm font-medium text-muted-foreground">Estado</label>
+                    <p className="font-medium">{selectedDocument.estado}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Fecha de Ingreso</label>
                     <p className="font-medium">
-                      {format(selectedDocument.fechaIngreso, "dd MMM yyyy", { locale: es })}
+                      {format(new Date(selectedDocument.created_at), "dd MMM yyyy", { locale: es })}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Datos específicos según tipo de documento */}
-              {(selectedDocument.tipoDocumento === "Pagaré" || selectedDocument.tipoDocumento === "Solicitud de Crédito") && (
+              {(selectedDocument.nombre_deudor || selectedDocument.id_deudor) && (
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Información Crediticia</h3>
+                  <h3 className="text-lg font-semibold mb-3">Información del Deudor</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Deudor</label>
-                      <p className="font-medium">{selectedDocument.nombreDeudor}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">ID Deudor</label>
-                      <p className="font-medium">{selectedDocument.idDeudor}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Codeudor</label>
-                      <p className="font-medium">{selectedDocument.nombreCodeudor}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">ID Codeudor</label>
-                      <p className="font-medium">{selectedDocument.idCodeudor}</p>
-                    </div>
+                    {selectedDocument.nombre_deudor && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Nombre</label>
+                        <p className="font-medium">{selectedDocument.nombre_deudor}</p>
+                      </div>
+                    )}
+                    {selectedDocument.id_deudor && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">ID</label>
+                        <p className="font-medium">{selectedDocument.id_deudor}</p>
+                      </div>
+                    )}
+                    {selectedDocument.telefono && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Teléfono</label>
+                        <p className="font-medium">{selectedDocument.telefono}</p>
+                      </div>
+                    )}
+                    {selectedDocument.email && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Email</label>
+                        <p className="font-medium">{selectedDocument.email}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
-              {selectedDocument.tipoDocumento === "Consentimiento Informado" && (
+              {selectedDocument.valores_atributos && selectedDocument.valores_atributos.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Información del Paciente</h3>
+                  <h3 className="text-lg font-semibold mb-3">Atributos Personalizados</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Paciente</label>
-                      <p className="font-medium">{selectedDocument.nombreDeudor}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">ID Paciente</label>
-                      <p className="font-medium">{selectedDocument.idDeudor}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Acudiente</label>
-                      <p className="font-medium">{selectedDocument.nombreCodeudor}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">ID Acudiente</label>
-                      <p className="font-medium">{selectedDocument.idCodeudor}</p>
-                    </div>
+                    {selectedDocument.valores_atributos.map((attr) => (
+                      <div key={attr.id}>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          {attr.atributos_personalizados.nombre}
+                        </label>
+                        <p className="font-medium">{attr.valor}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

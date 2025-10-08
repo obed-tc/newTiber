@@ -15,38 +15,36 @@ import { Shield, LogOut, Settings, User, Building2 } from "lucide-react";
 interface DashboardHeaderProps {
   user: {
     id: string;
-    name: string;
+    full_name: string;
     email: string;
-    role: "admin" | "viewer";
-    workspace: string;
+    rol: "SuperAdmin" | "Administrador" | "Visualizador";
   };
   workspaces: {
     id: string;
     name: string;
   }[];
   onLogout: () => void;
-  onWorkspaceChange?: (workspace: string) => void;
+  onWorkspaceChange?: (workspaceId: string) => void;
+  selectedWorkspaceId?: string;
 }
 
 
-export const DashboardHeader = ({ user, workspaces, onLogout, onWorkspaceChange }: DashboardHeaderProps) => {
-  const availableWorkspaces = workspaces; // ahora vienen de la DB
-
-  // Workspaces disponibles (esto vendría de una API en implementación real)
-  // const availableWorkspaces = [
-  //   "TiverDocs Platform",
-  //   "Empresa A - Documentos",
-  //   "Empresa B - Títulos Valor",
-  //   "Cooperativa Rural",
-  //   "Banco Central"
-  // ];
+export const DashboardHeader = ({ user, workspaces, onLogout, onWorkspaceChange, selectedWorkspaceId }: DashboardHeaderProps) => {
+  const availableWorkspaces = workspaces;
+  const currentWorkspace = workspaces.find(w => w.id === selectedWorkspaceId);
 
   const getRoleColor = (role: string) => {
-    return role === "admin" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground";
+    if (role === "SuperAdmin" || role === "Administrador") return "bg-primary/10 text-primary";
+    return "bg-muted text-muted-foreground";
   };
 
   const getRoleLabel = (role: string) => {
-    return role === "admin" ? "Administrador" : "Visualizador";
+    switch (role) {
+      case "SuperAdmin": return "Super Admin";
+      case "Administrador": return "Administrador";
+      case "Visualizador": return "Visualizador";
+      default: return role;
+    }
   };
 
 
@@ -60,7 +58,7 @@ export const DashboardHeader = ({ user, workspaces, onLogout, onWorkspaceChange 
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground">TiverDocs</h1>
-              <p className="text-sm text-muted-foreground">{user.workspace}</p>
+              <p className="text-sm text-muted-foreground">{currentWorkspace?.name || 'Sin workspace'}</p>
             </div>
           </div>
         </div>
@@ -72,7 +70,7 @@ export const DashboardHeader = ({ user, workspaces, onLogout, onWorkspaceChange 
               <Building2 className="w-5 h-5 text-primary" />
               <div className="flex flex-col min-w-0">
                 <span className="text-xs text-primary/80 font-medium">Workspace Activo</span>
-                <Select value={user.workspace} onValueChange={onWorkspaceChange}>
+                <Select value={selectedWorkspaceId} onValueChange={onWorkspaceChange}>
                   <SelectTrigger className="w-[220px] bg-transparent border-0 h-auto p-0 text-sm font-semibold text-foreground focus:ring-0 shadow-none hover:text-primary transition-colors [&>span]:bg-transparent [&>span]:text-inherit">
                     <SelectValue
                       placeholder="Seleccionar workspace"
@@ -86,14 +84,14 @@ export const DashboardHeader = ({ user, workspaces, onLogout, onWorkspaceChange 
                     {availableWorkspaces.map((workspace) => (
                       <SelectItem
                         key={workspace.id}
-                        value={workspace.name}
+                        value={workspace.id}
                         className="cursor-pointer focus:bg-primary/10 focus:text-primary py-3 px-3 rounded-md m-1"
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-2 h-2 rounded-full ${workspace.name === user.workspace ? 'bg-primary' : 'bg-muted-foreground/30'}`}></div>
+                          <div className={`w-2 h-2 rounded-full ${workspace.id === selectedWorkspaceId ? 'bg-primary' : 'bg-muted-foreground/30'}`}></div>
                           <Building2 className="w-4 h-4" />
                           <span className="font-medium">{workspace.name}</span>
-                          {workspace.name === user.workspace && (
+                          {workspace.id === selectedWorkspaceId && (
                             <Badge variant="secondary" className="ml-auto text-xs">Activo</Badge>
                           )}
                         </div>
@@ -128,8 +126,8 @@ export const DashboardHeader = ({ user, workspaces, onLogout, onWorkspaceChange 
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <Badge variant="secondary" className={getRoleColor(user.role)}>
-              {getRoleLabel(user.role)}
+            <Badge variant="secondary" className={getRoleColor(user.rol)}>
+              {getRoleLabel(user.rol)}
             </Badge>
           </div>
 
@@ -148,7 +146,7 @@ export const DashboardHeader = ({ user, workspaces, onLogout, onWorkspaceChange 
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.name}</p>
+                    <p className="text-sm font-medium leading-none">{user.full_name}</p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {user.email}
                     </p>
