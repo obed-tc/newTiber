@@ -1,59 +1,19 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Building2, 
-  Users, 
-  FileText, 
-  TrendingUp, 
-  AlertTriangle, 
-  CheckCircle,
-  Calendar,
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Building2,
+  Users,
+  FileText,
+  TrendingUp,
+  AlertTriangle,
   DollarSign
 } from "lucide-react";
-
-const mockData = {
-  totalWorkspaces: 12,
-  activeWorkspaces: 10,
-  totalUsers: 156,
-  totalDocuments: 45890,
-  expiredDocuments: 234,
-  expiringThisMonth: 1850,
-  totalValue: 95750000000, // 95.75 mil millones COP
-  monthlyGrowth: 18.5
-};
-
-const recentActivity = [
-  {
-    id: 1,
-    action: "Nuevo workspace creado",
-    workspace: "Banco Regional S.A.",
-    timestamp: "Hace 2 horas",
-    type: "workspace"
-  },
-  {
-    id: 2,
-    action: "Usuario administrador agregado",
-    workspace: "Cooperativa del Valle",
-    timestamp: "Hace 4 horas",
-    type: "user"
-  },
-  {
-    id: 3,
-    action: "Carga masiva de documentos",
-    workspace: "Financiera Capital",
-    timestamp: "Hace 6 horas",
-    type: "document"
-  },
-  {
-    id: 4,
-    action: "Workspace desactivado",
-    workspace: "Empresa Demo S.A.S.",
-    timestamp: "Hace 1 día",
-    type: "workspace"
-  }
-];
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 
 export const SuperAdminDashboard = () => {
+  const stats = useDashboardStats();
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
@@ -67,6 +27,27 @@ export const SuperAdminDashboard = () => {
     return new Intl.NumberFormat('es-CO').format(value);
   };
 
+  if (stats.loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="bg-gradient-card shadow-card">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4 rounded" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-4 w-32" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Métricas principales */}
@@ -77,10 +58,10 @@ export const SuperAdminDashboard = () => {
             <Building2 className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockData.totalWorkspaces}</div>
+            <div className="text-2xl font-bold">{stats.totalWorkspaces}</div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Badge variant="outline" className="text-success border-success">
-                {mockData.activeWorkspaces} activos
+                {stats.activeWorkspaces} activos
               </Badge>
             </div>
           </CardContent>
@@ -92,9 +73,9 @@ export const SuperAdminDashboard = () => {
             <Users className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(mockData.totalUsers)}</div>
+            <div className="text-2xl font-bold">{formatNumber(stats.totalUsers)}</div>
             <p className="text-xs text-muted-foreground">
-              Distribuidos en {mockData.activeWorkspaces} workspaces
+              Distribuidos en {stats.activeWorkspaces} workspaces
             </p>
           </CardContent>
         </Card>
@@ -105,10 +86,10 @@ export const SuperAdminDashboard = () => {
             <FileText className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(mockData.totalDocuments)}</div>
+            <div className="text-2xl font-bold">{formatNumber(stats.totalDocuments)}</div>
             <div className="flex items-center gap-1 text-xs">
               <TrendingUp className="h-3 w-3 text-success" />
-              <span className="text-success">+{mockData.monthlyGrowth}%</span>
+              <span className="text-success">+{stats.monthlyGrowth.toFixed(1)}%</span>
               <span className="text-muted-foreground">este mes</span>
             </div>
           </CardContent>
@@ -120,7 +101,7 @@ export const SuperAdminDashboard = () => {
             <DollarSign className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(mockData.totalValue)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(stats.totalValue)}</div>
             <p className="text-xs text-muted-foreground">
               En documentos activos
             </p>
@@ -144,7 +125,7 @@ export const SuperAdminDashboard = () => {
                 <div className="h-2 w-2 bg-destructive rounded-full"></div>
                 <span className="text-sm">Documentos vencidos</span>
               </div>
-              <Badge variant="destructive">{formatNumber(mockData.expiredDocuments)}</Badge>
+              <Badge variant="destructive">{formatNumber(stats.expiredDocuments)}</Badge>
             </div>
             
             <div className="flex items-center justify-between">
@@ -153,39 +134,13 @@ export const SuperAdminDashboard = () => {
                 <span className="text-sm">Vencen este mes</span>
               </div>
               <Badge variant="outline" className="text-warning border-warning">
-                {formatNumber(mockData.expiringThisMonth)}
+                {formatNumber(stats.expiringThisMonth)}
               </Badge>
             </div>
             
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-card shadow-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
-              Actividad Reciente
-            </CardTitle>
-            <CardDescription>Últimas acciones en el sistema</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3">
-                  <div className={`h-2 w-2 rounded-full mt-2 ${
-                    activity.type === 'workspace' ? 'bg-primary' :
-                    activity.type === 'user' ? 'bg-success' : 'bg-warning'
-                  }`}></div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{activity.action}</p>
-                    <p className="text-xs text-muted-foreground">{activity.workspace}</p>
-                    <p className="text-xs text-muted-foreground">{activity.timestamp}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
