@@ -11,6 +11,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Shield, LogOut, Settings, User, Building2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface DashboardHeaderProps {
   user: {
@@ -30,6 +31,7 @@ interface DashboardHeaderProps {
 
 
 export const DashboardHeader = ({ user, workspaces, onLogout, onWorkspaceChange, selectedWorkspaceId }: DashboardHeaderProps) => {
+  const navigate = useNavigate();
   const availableWorkspaces = workspaces;
   const currentWorkspace = workspaces.find(w => w.id === selectedWorkspaceId);
 
@@ -153,7 +155,7 @@ export const DashboardHeader = ({ user, workspaces, onLogout, onWorkspaceChange,
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/perfil')}>
                   <User className="mr-2 h-4 w-4" />
                   <span>Perfil</span>
                 </DropdownMenuItem>

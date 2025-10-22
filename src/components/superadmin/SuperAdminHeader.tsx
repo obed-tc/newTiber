@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { LogOut, Settings, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface SuperAdminHeaderProps {
   user: {
@@ -20,6 +21,8 @@ interface SuperAdminHeaderProps {
 }
 
 export const SuperAdminHeader = ({ user, onLogout }: SuperAdminHeaderProps) => {
+  const navigate = useNavigate();
+
   const initials = user.full_name
     .split(' ')
     .map(n => n[0])
@@ -53,7 +56,7 @@ export const SuperAdminHeader = ({ user, onLogout }: SuperAdminHeaderProps) => {
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate('/perfil')}>
             <User className="mr-2 h-4 w-4" />
             <span>Perfil</span>
           </DropdownMenuItem>

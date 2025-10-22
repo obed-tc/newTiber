@@ -8,6 +8,9 @@ import officeBackground from "@/assets/office-background.jpg";
 import tiverLogo from "@/assets/tiver-logo.png";
 import { ForgotPasswordForm } from "./ForgotPasswordForm";
 import { RegisterRequestForm } from "./RegisterRequestForm";
+import { createRegisterRequest } from "@/services/registerRequestService";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => void;
@@ -21,6 +24,7 @@ export const LoginForm = ({ onLogin, onForgotPassword }: LoginFormProps) => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [currentView, setCurrentView] = useState<ViewState>("login");
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,19 +36,63 @@ export const LoginForm = ({ onLogin, onForgotPassword }: LoginFormProps) => {
     }
   };
 
-  const handleForgotPassword = (email: string) => {
-    onForgotPassword();
+  const handleForgotPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Enlace enviado",
+        description: "Revisa tu correo para restablecer tu contraseña.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo enviar el enlace de recuperación.",
+        variant: "destructive"
+      });
+      throw error;
+    }
   };
 
-  const handleRegisterRequest = (data: any) => {
-    // Handle register request submission
-    console.log("Register request:", data);
+  const handleRegisterRequest = async (data: {
+    companyName: string;
+    contactName: string;
+    email: string;
+    phone: string;
+    message: string;
+  }) => {
+    try {
+      await createRegisterRequest({
+        company_name: data.companyName,
+        contact_name: data.contactName,
+        email: data.email,
+        phone: data.phone,
+        message: data.message
+      });
+
+      toast({
+        title: "Solicitud enviada",
+        description: "Hemos recibido tu solicitud. Te contactaremos pronto.",
+      });
+    } catch (error) {
+      console.error('Error al enviar solicitud:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo enviar la solicitud. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
+      throw error;
+    }
   };
 
   return (
     <div className="min-h-screen flex">
       {/* Left side - Background image with overlay (desktop only) */}
-      <div 
+      <div
         className="hidden lg:flex lg:flex-1 relative bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${officeBackground})` }}
       >
@@ -128,7 +176,7 @@ export const LoginForm = ({ onLogin, onForgotPassword }: LoginFormProps) => {
 
               <div className="text-center mt-6 text-sm text-muted-foreground">
                 ¿Eres una nueva empresa?{" "}
-                <button 
+                <button
                   onClick={() => setCurrentView("register-request")}
                   className="text-primary hover:text-primary/80 transition-colors"
                 >
@@ -139,14 +187,14 @@ export const LoginForm = ({ onLogin, onForgotPassword }: LoginFormProps) => {
           )}
 
           {currentView === "forgot-password" && (
-            <ForgotPasswordForm 
+            <ForgotPasswordForm
               onBack={() => setCurrentView("login")}
               onSubmit={handleForgotPassword}
             />
           )}
 
           {currentView === "register-request" && (
-            <RegisterRequestForm 
+            <RegisterRequestForm
               onBack={() => setCurrentView("login")}
               onSubmit={handleRegisterRequest}
             />

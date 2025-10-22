@@ -37,8 +37,70 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useUsers, UserRole, UserWithWorkspaces } from "@/hooks/useUsers";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
+import { useEffect } from 'react';
+import { getPendingRegisterRequests, approveRegisterRequest, rejectRegisterRequest, RegisterRequest } from '@/services/registerRequestService';
+import { useToast } from "@/hooks/use-toast";
 
 export const UsersManager = () => {
+  const { toast } = useToast();
+
+  // Solicitudes pendientes (debe estar dentro del componente)
+  const [showRequestsDialog, setShowRequestsDialog] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState<RegisterRequest[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [pendingApprovalRequest, setPendingApprovalRequest] = useState<RegisterRequest | null>(null);
+
+  const fetchPendingRequests = async () => {
+    setLoadingRequests(true);
+    try {
+      const data = await getPendingRegisterRequests();
+      setPendingRequests(data);
+    } catch (e) {
+      setPendingRequests([]);
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showRequestsDialog) fetchPendingRequests();
+  }, [showRequestsDialog]);
+
+  const handleApproveRequest = async (request: RegisterRequest) => {
+    // En lugar de aprobar directamente, abrimos el modal de crear usuario con los datos
+    setShowRequestsDialog(false);
+    setPendingApprovalRequest(request);
+    setFormData({
+      full_name: request.contact_name,
+      email: request.email,
+      password: "",
+      rol: "Administrador",
+      workspaceIds: []
+    });
+    setShowPassword(false);
+    setIsDialogOpen(true);
+  };
+
+  const handleRejectRequest = async (id: string) => {
+    setActionLoading(id);
+    try {
+      await rejectRegisterRequest(id);
+      await fetchPendingRequests();
+      toast({
+        title: "Solicitud rechazada",
+        description: "La solicitud ha sido rechazada."
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo rechazar la solicitud.",
+        variant: "destructive"
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  };
   const { users, loading: usersLoading, createUser, updateUser, toggleUserStatus, deleteUser } = useUsers();
   const { workspaces, loading: workspacesLoading } = useWorkspaces();
 
@@ -98,6 +160,7 @@ export const UsersManager = () => {
 
   const handleOpenCreateDialog = () => {
     setEditingUser(null);
+    setPendingApprovalRequest(null); // Limpiar solicitud pendiente
     setFormData({
       full_name: "",
       email: "",
@@ -151,6 +214,16 @@ export const UsersManager = () => {
           rol: formData.rol,
           workspaceIds: formData.workspaceIds
         });
+
+        // Si viene de una solicitud pendiente, marcarla como aprobada
+        if (pendingApprovalRequest) {
+          await approveRegisterRequest(pendingApprovalRequest.id);
+          toast({
+            title: "Usuario creado y solicitud aprobada",
+            description: `El usuario ${formData.full_name} ha sido creado y la solicitud ha sido aprobada.`
+          });
+          setPendingApprovalRequest(null);
+        }
       }
 
       setFormData({
@@ -163,8 +236,17 @@ export const UsersManager = () => {
       setShowPassword(false);
       setIsDialogOpen(false);
       setEditingUser(null);
+      setPendingApprovalRequest(null);
     } catch (error) {
       console.error('Error saving user:', error);
+    }
+  };
+
+  const handleCloseDialog = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      // Si se cierra el diálogo sin guardar y había una solicitud pendiente, limpiarla
+      setPendingApprovalRequest(null);
     }
   };
 
@@ -251,10 +333,71 @@ export const UsersManager = () => {
                 Administra usuarios y sus permisos por workspace
               </CardDescription>
             </div>
-            <Button onClick={handleOpenCreateDialog} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nuevo Usuario
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setShowRequestsDialog(true)} variant="outline" className="gap-2">
+                Ver solicitudes pendientes
+              </Button>
+              <Button onClick={handleOpenCreateDialog} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Nuevo Usuario
+              </Button>
+            </div>
+            {/* Dialogo de solicitudes pendientes */}
+            <Dialog open={showRequestsDialog} onOpenChange={setShowRequestsDialog}>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>Solicitudes de registro pendientes</DialogTitle>
+                  <DialogDescription>Revisa y gestiona las solicitudes de acceso enviadas por empresas.</DialogDescription>
+                </DialogHeader>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Empresa</TableHead>
+                        <TableHead>Contacto</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Teléfono</TableHead>
+                        <TableHead>Mensaje</TableHead>
+                        <TableHead>Fecha</TableHead>
+                        <TableHead>Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loadingRequests ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center">Cargando...</TableCell>
+                        </TableRow>
+                      ) : pendingRequests.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center text-muted-foreground">No hay solicitudes pendientes</TableCell>
+                        </TableRow>
+                      ) : (
+                        pendingRequests.map((req) => (
+                          <TableRow key={req.id}>
+                            <TableCell>{req.company_name}</TableCell>
+                            <TableCell>{req.contact_name}</TableCell>
+                            <TableCell>{req.email}</TableCell>
+                            <TableCell>{req.phone}</TableCell>
+                            <TableCell>{req.message}</TableCell>
+                            <TableCell>{new Date(req.created_at).toLocaleString('es-CO')}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button size="sm" variant="default" disabled={actionLoading === req.id} onClick={() => handleApproveRequest(req)}>
+                                  {actionLoading === req.id ? 'Aprobando...' : 'Aceptar'}
+                                </Button>
+                                <Button size="sm" variant="destructive" disabled={actionLoading === req.id} onClick={() => handleRejectRequest(req.id)}>
+                                  {actionLoading === req.id ? 'Rechazando...' : 'Rechazar'}
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
 
@@ -399,19 +542,40 @@ export const UsersManager = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {editingUser ? 'Editar Usuario' : 'Crear Nuevo Usuario'}
+              {editingUser ? 'Editar Usuario' : pendingApprovalRequest ? 'Crear Usuario desde Solicitud' : 'Crear Nuevo Usuario'}
             </DialogTitle>
             <DialogDescription>
               {editingUser
                 ? `Modifica la información de ${editingUser.full_name}.`
-                : 'Agrega un nuevo usuario y asígnalo a uno o más workspaces.'
+                : pendingApprovalRequest
+                  ? `Crea un usuario para la solicitud de ${pendingApprovalRequest.company_name}. La solicitud se marcará como aprobada al crear el usuario.`
+                  : 'Agrega un nuevo usuario y asígnalo a uno o más workspaces.'
               }
             </DialogDescription>
           </DialogHeader>
+
+          {pendingApprovalRequest && (
+            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                📋 Solicitud pendiente
+              </p>
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                Empresa: <strong>{pendingApprovalRequest.company_name}</strong>
+              </p>
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                Teléfono: {pendingApprovalRequest.phone || 'No proporcionado'}
+              </p>
+              {pendingApprovalRequest.message && (
+                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                  Mensaje: {pendingApprovalRequest.message}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-4">
             <div>
