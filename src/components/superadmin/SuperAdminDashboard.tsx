@@ -7,12 +7,17 @@ import {
   FileText,
   TrendingUp,
   AlertTriangle,
-  DollarSign
+  DollarSign,
+  Calendar
 } from "lucide-react";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useRecentActivity } from "@/hooks/useRecentActivity";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale/es";
 
 export const SuperAdminDashboard = () => {
   const stats = useDashboardStats();
+  const { activities, loading: activitiesLoading } = useRecentActivity(5);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-CO', {
@@ -25,6 +30,19 @@ export const SuperAdminDashboard = () => {
 
   const formatNumber = (value: number) => {
     return new Intl.NumberFormat('es-CO').format(value);
+  };
+
+  const getActivityColor = (tipo: string | null) => {
+    switch (tipo) {
+      case 'workspace':
+        return 'bg-primary';
+      case 'usuario':
+        return 'bg-success';
+      case 'documento':
+        return 'bg-warning';
+      default:
+        return 'bg-muted-foreground';
+    }
   };
 
   if (stats.loading) {
@@ -138,6 +156,55 @@ export const SuperAdminDashboard = () => {
               </Badge>
             </div>
             
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-card shadow-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Actividad Reciente
+            </CardTitle>
+            <CardDescription>Últimas acciones en el sistema</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {activitiesLoading ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <Skeleton className="h-2 w-2 rounded-full mt-2" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : activities.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No hay actividad reciente
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {activities.map((activity) => (
+                  <div key={activity.id} className="flex items-start gap-3">
+                    <div className={`h-2 w-2 rounded-full mt-2 ${getActivityColor(activity.entidad_tipo)}`}></div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{activity.accion}</p>
+                      {activity.entidad_nombre && (
+                        <p className="text-xs text-muted-foreground">{activity.entidad_nombre}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(activity.fecha), {
+                          addSuffix: true,
+                          locale: es
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

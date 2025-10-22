@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { logActivity } from '@/services/activityService';
 
 export type WorkspaceStatus = 'Activo' | 'Inactivo';
 
@@ -65,6 +66,13 @@ export const useWorkspaces = () => {
 
       await fetchWorkspaces();
 
+      await logActivity({
+        accion: 'Nuevo workspace creado',
+        entidad_tipo: 'workspace',
+        entidad_nombre: workspaceData.name,
+        entidad_id: data.id
+      });
+
       toast({
         title: 'Workspace creado',
         description: `${workspaceData.name} ha sido creado exitosamente`
@@ -108,12 +116,23 @@ export const useWorkspaces = () => {
 
   const deleteWorkspace = async (workspaceId: string) => {
     try {
+      const workspace = workspaces.find(w => w.id === workspaceId);
+
       const { error } = await supabase
         .from('workspaces')
         .delete()
         .eq('id', workspaceId);
 
       if (error) throw error;
+
+      if (workspace) {
+        await logActivity({
+          accion: 'Workspace eliminado',
+          entidad_tipo: 'workspace',
+          entidad_nombre: workspace.name,
+          entidad_id: workspaceId
+        });
+      }
 
       await fetchWorkspaces();
 
@@ -133,7 +152,18 @@ export const useWorkspaces = () => {
 
   const toggleWorkspaceStatus = async (workspaceId: string, currentStatus: WorkspaceStatus) => {
     const newStatus: WorkspaceStatus = currentStatus === 'Activo' ? 'Inactivo' : 'Activo';
+    const workspace = workspaces.find(w => w.id === workspaceId);
+
     await updateWorkspace(workspaceId, { estado: newStatus });
+
+    if (workspace) {
+      await logActivity({
+        accion: `Workspace ${newStatus === 'Activo' ? 'activado' : 'desactivado'}`,
+        entidad_tipo: 'workspace',
+        entidad_nombre: workspace.name,
+        entidad_id: workspaceId
+      });
+    }
   };
 
   useEffect(() => {

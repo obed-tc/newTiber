@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { logActivity } from '@/services/activityService';
 
 export type UserRole = 'SuperAdmin' | 'Administrador' | 'Visualizador';
 export type UserStatus = 'Activo' | 'Inactivo';
@@ -139,6 +140,13 @@ export const useUsers = () => {
 
       await fetchUsers();
 
+      await logActivity({
+        accion: 'Usuario creado',
+        entidad_tipo: 'usuario',
+        entidad_nombre: userData.full_name,
+        entidad_id: authData.user.id
+      });
+
       toast({
         title: 'Usuario creado',
         description: `${userData.full_name} ha sido creado exitosamente`
@@ -212,6 +220,13 @@ export const useUsers = () => {
 
       await fetchUsers();
 
+      await logActivity({
+        accion: 'Usuario actualizado',
+        entidad_tipo: 'usuario',
+        entidad_nombre: updates.full_name,
+        entidad_id: userId
+      });
+
       toast({
         title: 'Usuario actualizado',
         description: `${updates.full_name} ha sido actualizado exitosamente`
@@ -228,6 +243,8 @@ export const useUsers = () => {
 
   const deleteUser = async (userId: string) => {
     try {
+      const user = users.find(u => u.id === userId);
+
       // 1. Eliminar de la tabla usuarios (esto también eliminará user_workspaces por CASCADE)
       const { error: dbError } = await supabase
         .from('usuarios')
@@ -244,6 +261,15 @@ export const useUsers = () => {
       }
 
       await fetchUsers();
+
+      if (user) {
+        await logActivity({
+          accion: 'Usuario eliminado',
+          entidad_tipo: 'usuario',
+          entidad_nombre: user.full_name,
+          entidad_id: userId
+        });
+      }
 
       toast({
         title: 'Usuario eliminado',
@@ -271,6 +297,16 @@ export const useUsers = () => {
       if (error) throw error;
 
       await fetchUsers();
+
+      const user = users.find(u => u.id === userId);
+      if (user) {
+        await logActivity({
+          accion: `Usuario ${newStatus === 'Activo' ? 'activado' : 'desactivado'}`,
+          entidad_tipo: 'usuario',
+          entidad_nombre: user.full_name,
+          entidad_id: userId
+        });
+      }
 
       toast({
         title: 'Estado actualizado',
