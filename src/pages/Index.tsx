@@ -17,15 +17,21 @@ const Index = () => {
     );
   }
 
-  console.log("Usuario actual:", usuario);
+  console.log("Index - Usuario actual:", usuario?.email, "Rol:", usuario?.rol);
+
   if (usuario) {
+    console.log("Redirigiendo basado en rol:", usuario.rol);
+
     if (usuario.rol === "SuperAdmin") {
+      console.log("Mostrando SuperAdminPage");
       return <SuperAdminPage />;
     }
 
+    console.log("Mostrando DashboardPage para rol:", usuario.rol);
     return <DashboardPage />;
   }
 
+  console.log("No hay usuario, mostrando LoginPage");
   return <LoginPage />;
 };
 

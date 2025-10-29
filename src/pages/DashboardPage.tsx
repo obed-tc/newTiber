@@ -13,6 +13,8 @@ export const DashboardPage = () => {
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | undefined>();
   const { stats: documentStats, isLoading: statsLoading } = useDocumentStats(selectedWorkspaceId);
 
+  console.log("DashboardPage - Usuario:", usuario?.email, "Rol:", usuario?.rol);
+
   const userWorkspaces = users.find(u => u.id === usuario?.id)?.workspaces.map(w => ({
     id: w.workspace_id,
     name: w.workspace_name
@@ -31,6 +33,9 @@ export const DashboardPage = () => {
       </div>
     );
   }
+
+  const userRole = usuario.rol === 'SuperAdmin' || usuario.rol === 'Administrador' ? 'admin' : 'viewer';
+  console.log("DashboardPage - userRole asignado:", userRole);
 
   return (
     <div className="min-h-screen bg-gradient-background">
@@ -51,7 +56,7 @@ export const DashboardPage = () => {
           <StatsCards stats={documentStats} />
         ) : null}
 
-        <DocumentsTable workspaceId={selectedWorkspaceId} userRole={usuario.rol === 'SuperAdmin' || usuario.rol === 'Administrador' ? 'admin' : 'viewer'} />
+        <DocumentsTable workspaceId={selectedWorkspaceId} userRole={userRole} />
       </main>
     </div>
   );

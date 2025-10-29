@@ -90,13 +90,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       (async () => {
+        console.log("Auth state changed, event:", _event, "session:", session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
           const usuarioData = await fetchUsuario(session.user.id);
+          console.log("Usuario obtenido en onAuthStateChange:", usuarioData);
           setUsuario(usuarioData);
-          await updateLastAccess();
+          if (_event === 'SIGNED_IN') {
+            await updateLastAccess();
+          }
         } else {
           setUsuario(null);
         }
@@ -114,9 +118,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (error) throw error;
 
     if (data.user) {
-      setUser(data.user);
       const usuarioData = await fetchUsuario(data.user.id);
+      console.log("Usuario obtenido en signIn:", usuarioData);
+
+      setUser(data.user);
       setUsuario(usuarioData);
+      setSession(data.session);
+
       await updateLastAccess();
     }
   };

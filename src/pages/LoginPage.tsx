@@ -8,13 +8,15 @@ export const LoginPage = () => {
 
   const handleLogin = async (email: string, password: string) => {
     try {
+      console.log("LoginPage - Intentando login con:", email);
       await signIn(email, password);
+      console.log("LoginPage - Login exitoso");
       toast({
         title: "Bienvenido",
         description: "Has iniciado sesión correctamente",
       });
     } catch (error: any) {
-      console.error("Error de autenticación:", error);
+      console.error("LoginPage - Error de autenticación:", error);
       toast({
         title: "Error de autenticación",
         description:
